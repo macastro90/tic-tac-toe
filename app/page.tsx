@@ -1,39 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { GameBoard } from '@/components/GameBoard';
-import { Board } from '@/lib/types';
+import { GameStatus } from '@/components/GameStatus';
+import { useGameLogic } from '@/hooks/useGameLogic';
 
 /**
  * Home Page - Main Tic-Tac-Toe Game
  *
- * Currently displays the game board with basic interaction.
- * Game logic (turn management, win detection) will be added in subsequent issues.
+ * Displays the game board with full turn management logic.
+ * Players alternate between X and O with proper validation.
  */
 export default function Home() {
-  // Temporary state for demo - will be moved to custom hook in Issue #3
-  const [board, setBoard] = useState<Board>(Array(9).fill(null));
-
-  /**
-   * Temporary click handler for demo purposes
-   * Real game logic will be implemented in Issue #3
-   */
-  const handleCellClick = (index: number) => {
-    if (board[index]) return; // Cell already occupied
-
-    const newBoard = [...board];
-    // Temporary: Just alternate X and O for visual testing
-    const moveCount = board.filter(cell => cell !== null).length;
-    newBoard[index] = moveCount % 2 === 0 ? 'X' : 'O';
-    setBoard(newBoard);
-  };
-
-  /**
-   * Reset board for testing
-   */
-  const handleReset = () => {
-    setBoard(Array(9).fill(null));
-  };
+  // Use custom hook for game logic (Issue #3)
+  const { board, currentPlayer, makeMove, resetGame } = useGameLogic();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
@@ -51,38 +31,17 @@ export default function Home() {
         {/* Game Board */}
         <GameBoard
           board={board}
-          onCellClick={handleCellClick}
+          onCellClick={makeMove}
           disabled={false}
         />
 
-        {/* Controls */}
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={handleReset}
-            className="
-              px-6 py-3
-              bg-indigo-600
-              text-white
-              font-semibold
-              rounded-lg
-              shadow-md
-              hover:bg-indigo-700
-              active:scale-95
-              transition-all duration-200
-              focus:outline-none
-              focus:ring-2
-              focus:ring-indigo-500
-              focus:ring-offset-2
-            "
-          >
-            Reset Game
-          </button>
-        </div>
+        {/* Game Status - Shows current turn and reset button */}
+        <GameStatus currentPlayer={currentPlayer} onReset={resetGame} />
 
-        {/* Status Message */}
+        {/* Info Message */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            ⚠️ <strong>Demo Mode:</strong> Game logic (turns, win detection) coming in Issues #3-5
+            ✅ <strong>Turn logic active!</strong> Win/draw detection coming in Issues #4-5
           </p>
         </div>
       </div>
