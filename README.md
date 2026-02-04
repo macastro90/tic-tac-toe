@@ -36,14 +36,35 @@ The goal is to showcase how AI agents can autonomously handle the complete softw
 
 ## ✨ Features
 
-- ✅ **Classic 3x3 Game Board** - Clean, responsive grid layout
-- ✅ **Two-Player Gameplay** - Alternate turns between X and O
-- ✅ **Win Detection** - Detects all 8 winning combinations (rows, columns, diagonals)
-- ✅ **Draw Detection** - Identifies when the game ends in a tie
-- ✅ **Game Reset** - Start a new game without page refresh
-- ✅ **Score Tracking** - Persistent score tracking across multiple games
+### 🎮 Gameplay Modes
+- ✅ **2D Mode (Classic)** - Traditional 3x3 game board
+- ✅ **3D Mode (Advanced)** - 3x3x3 cube with 27 cells across 3 layers
+- ✅ **Mode Toggle** - Seamlessly switch between 2D and 3D gameplay
+- ✅ **Two-Player Gameplay** - Alternate turns between X and O in both modes
+
+### 🏆 Game Logic
+- ✅ **2D Win Detection** - Detects all 8 winning combinations (rows, columns, diagonals)
+- ✅ **3D Win Detection** - Detects all 49 winning combinations in 3D space
+  - 9 horizontal rows across 3 layers
+  - 9 vertical columns across 3 layers
+  - 6 planar diagonals (2 per layer)
+  - 12 vertical plane diagonals through layers
+  - 9 depth rows (front to back)
+  - 4 space diagonals (corner to corner)
+- ✅ **Draw Detection** - Identifies when games end in a tie (both modes)
+- ✅ **Game Reset** - Start new games without page refresh
+
+### 📊 Score System
+- ✅ **Separate Score Tracking** - Independent scores for 2D and 3D modes
+- ✅ **Persistent Scores** - Scores saved in localStorage by mode
+- ✅ **Score Reset** - Reset scores independently for each mode
+- ✅ **Visual Score Display** - Color-coded score cards (X: Blue, O: Red, Draws: Gray)
+
+### 🎨 User Experience
 - ✅ **Responsive Design** - Optimized for mobile, tablet, and desktop
 - ✅ **Accessible** - Keyboard navigation and screen reader support
+- ✅ **Visual Feedback** - Hover effects, winning cell highlights, smooth transitions
+- ✅ **Touch-Friendly** - Minimum 44x44px tap targets for mobile
 - ✅ **Type-Safe** - Full TypeScript coverage with strict mode
 
 ---
@@ -86,16 +107,29 @@ All features are implemented following structured workflows:
    - Analyze requirements from GitHub issues
    - Design technical approach
    - Identify dependencies and edge cases
+   - Plan 3D coordinate systems and winning combinations
 
 2. **🔨 BUILD Phase**
    - Implement features following best practices
    - Write type-safe, clean code
    - Apply responsive design patterns
+   - Implement complex 3D game logic algorithms
 
 3. **✅ TEST Phase**
    - Validate functionality thoroughly
-   - Test responsive behavior
+   - Test responsive behavior (both 2D and 3D layouts)
    - Verify accessibility compliance
+   - Test all 49 winning combinations in 3D mode
+   - Verify score separation and persistence
+
+4. **📝 DOCUMENT & COMMIT Phase**
+   - Update documentation
+   - Create descriptive commits with agent attribution
+   - Update README and specs
+
+5. **🚀 DEPLOY Phase**
+   - Deploy to Vercel production
+   - Verify live functionality
 
 ### Evidence of Autonomous Development
 
@@ -132,12 +166,15 @@ tic-tac-toe/
 │   ├── page.tsx               # Main game page
 │   └── globals.css            # Tailwind imports
 ├── components/                 # React components
-│   ├── GameBoard.tsx          # 3x3 game grid
-│   ├── ScoreBoard.tsx         # Score display
+│   ├── GameBoard.tsx          # 2D game grid (3x3)
+│   ├── GameBoard3D.tsx        # 3D game board (3x3x3 cube)
+│   ├── ModeToggle.tsx         # 2D/3D mode switcher
+│   ├── ScoreBoard.tsx         # Score display (both modes)
 │   └── GameStatus.tsx         # Game state messages
 ├── hooks/                      # Custom React hooks
-│   ├── useGameLogic.ts        # Game state and logic
-│   └── useScore.ts            # Score tracking
+│   ├── useGameLogic.ts        # 2D game state and logic
+│   ├── useGameLogic3D.ts      # 3D game state and logic (49 combinations)
+│   └── useGameMode.ts         # Mode selection and persistence
 ├── lib/                        # Utility functions
 │   ├── gameLogic.ts           # Win/draw detection
 │   └── types.ts               # TypeScript types
@@ -199,21 +236,41 @@ npm run lint
 
 ## 🎲 Game Rules
 
-### Objective
-Get three of your symbols (X or O) in a row - horizontally, vertically, or diagonally.
+### 2D Mode (Classic)
 
-### How to Play
+**Objective:** Get three of your symbols (X or O) in a row - horizontally, vertically, or diagonally.
+
+**How to Play:**
 1. Player X goes first
 2. Click an empty cell to place your symbol
 3. Players alternate turns
 4. First to get three in a row wins
-5. If all cells are filled with no winner, it's a draw
+5. If all 9 cells are filled with no winner, it's a draw
 
-### Winning Combinations
-- **3 Horizontal rows**
-- **3 Vertical columns**
-- **2 Diagonals**
+**Winning Combinations:**
+- 3 Horizontal rows
+- 3 Vertical columns
+- 2 Diagonals
 - **Total: 8 winning patterns**
+
+### 3D Mode (Advanced)
+
+**Objective:** Get three of your symbols in a row across a 3x3x3 cube.
+
+**How to Play:**
+1. The board consists of 3 layers (Front, Middle, Back)
+2. Each layer is a 3x3 grid (27 total cells)
+3. Click any cell across the 3 layers to place your symbol
+4. Win by getting 3 in a row in ANY direction through 3D space
+
+**Winning Combinations:**
+- 9 Horizontal rows (3 per layer)
+- 9 Vertical columns (3 per layer)
+- 6 Planar diagonals (2 per layer)
+- 12 Vertical plane diagonals (through layers)
+- 9 Depth rows (front to back)
+- 4 Space diagonals (corner to corner through center)
+- **Total: 49 winning patterns in 3D space**
 
 For detailed rules, see [specs/game-rules.md](./specs/game-rules.md)
 
@@ -256,30 +313,53 @@ All work is documented through:
 
 ### Manual Testing Checklist
 
-**Functional Tests:**
-- [ ] X and O alternate correctly
-- [ ] All 8 win conditions detected
-- [ ] Draw detected when board is full
-- [ ] Cannot place on occupied cell
-- [ ] Cannot play after game ends
-- [ ] Reset button works correctly
+**2D Mode Functional Tests:**
+- [x] X and O alternate correctly
+- [x] All 8 win conditions detected
+- [x] Draw detected when board is full
+- [x] Cannot place on occupied cell
+- [x] Cannot play after game ends
+- [x] Reset button works correctly
+- [x] 2D scores tracked separately
+- [x] 2D scores persist in localStorage
+
+**3D Mode Functional Tests:**
+- [x] X and O alternate correctly in 3D
+- [x] All 49 win conditions detected
+- [x] Draw detected when all 27 cells filled
+- [x] Cannot place on occupied cell
+- [x] Cannot play after game ends
+- [x] Reset button works correctly
+- [x] 3D scores tracked separately
+- [x] 3D scores persist in localStorage
+
+**Mode Switching Tests:**
+- [x] Toggle switches between 2D and 3D
+- [x] 2D scores preserved when switching to 3D
+- [x] 3D scores preserved when switching to 2D
+- [x] Mode preference persists after page refresh
+- [x] No data loss during mode switching
 
 **Responsive Tests:**
-- [ ] Mobile (320px - 640px) ✓
-- [ ] Tablet (640px - 1024px) ✓
-- [ ] Desktop (1024px+) ✓
+- [x] Mobile (320px - 640px) - Both modes
+- [x] Tablet (640px - 1024px) - Both modes
+- [x] Desktop (1024px+) - Both modes
+- [x] 3D layers stack vertically on mobile
+- [x] 3D layers display side-by-side on desktop
 
 **Accessibility Tests:**
-- [ ] Keyboard navigation works (Tab, Enter)
-- [ ] Focus states visible
-- [ ] ARIA labels present
-- [ ] Color contrast sufficient
+- [x] Keyboard navigation works (Tab, Enter)
+- [x] Focus states visible
+- [x] ARIA labels present (including 3D layer info)
+- [x] Color contrast sufficient
+- [x] Touch targets minimum 44x44px
 
 **Technical Tests:**
-- [ ] No console errors
-- [ ] TypeScript build succeeds
-- [ ] ESLint passes
-- [ ] Production build works
+- [x] No console errors
+- [x] TypeScript build succeeds
+- [x] ESLint passes
+- [x] Production build works
+- [x] localStorage operations correct
 
 ---
 
@@ -320,12 +400,30 @@ vercel --prod
 
 ## 📚 Documentation
 
+### Specifications
 - **[Project Overview](./specs/project-overview.md)** - High-level project description
-- **[Game Rules](./specs/game-rules.md)** - Complete game rules and logic
+- **[Game Rules](./specs/game-rules.md)** - Complete game rules for 2D and 3D modes
 - **[Technical Requirements](./specs/technical-requirements.md)** - Detailed tech specs
+
+### AI Developer Workflows
 - **[Feature Workflow](./adws/feature-implementation-workflow.md)** - How features are built
 - **[Game Logic Workflow](./adws/game-logic-workflow.md)** - Game algorithm implementation
 - **[UI Component Workflow](./adws/ui-component-workflow.md)** - Component development process
+- **[Issue Creation Workflow](./adws/issue-creation-workflow.md)** - Automated issue generation
+
+### Key Implementation Details
+
+**3D Game Logic:**
+- 3x3x3 cube represented as flat array of 27 cells
+- Index mapping: `layer * 9 + row * 3 + col`
+- 49 winning combinations verified and tested
+- Separate state management from 2D mode
+
+**Score System:**
+- Independent localStorage keys for 2D and 3D
+- Score persistence across page refreshes
+- Mode-specific reset functionality
+- Real-time score updates on win/draw
 
 ---
 
@@ -359,12 +457,20 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📊 Project Stats
 
-- **Lines of Code:** ~1,500 (estimated)
-- **Components:** 3-5 React components
-- **Hooks:** 2 custom hooks
-- **GitHub Issues:** 9 (tracking all features)
+- **Lines of Code:** ~2,500+ (TypeScript, React, CSS)
+- **Components:** 6 React components
+  - GameBoard (2D), GameBoard3D (3D), ModeToggle, ScoreBoard, GameStatus, Layout
+- **Custom Hooks:** 3 game logic hooks
+  - useGameLogic (2D - 8 combinations)
+  - useGameLogic3D (3D - 49 combinations)
+  - useGameMode (mode persistence)
+- **Game Modes:** 2 (2D Classic + 3D Advanced)
+- **Total Winning Combinations:** 57 (8 in 2D + 49 in 3D)
+- **GitHub Issues:** 13 (all features tracked and implemented)
+- **Commits:** 10+ with full agent attribution
 - **Agent Attribution:** 100% of commits
-- **Test Coverage:** Manual testing across all scenarios
+- **Test Coverage:** Manual testing across all scenarios (both modes)
+- **localStorage Keys:** 3 (2D scores, 3D scores, mode preference)
 
 ---
 
