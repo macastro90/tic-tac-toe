@@ -3,6 +3,7 @@
 import React from 'react';
 import { GameBoard } from '@/components/GameBoard';
 import { GameStatus } from '@/components/GameStatus';
+import { ScoreBoard } from '@/components/ScoreBoard';
 import { useGameLogic } from '@/hooks/useGameLogic';
 
 /**
@@ -10,10 +11,11 @@ import { useGameLogic } from '@/hooks/useGameLogic';
  *
  * Displays the game board with full turn management logic.
  * Players alternate between X and O with proper validation.
+ * Includes score tracking across multiple games.
  */
 export default function Home() {
-  // Use custom hook for game logic (Issues #3, #4, and #5)
-  const { board, currentPlayer, winner, winningLine, isDraw, makeMove, resetGame } = useGameLogic();
+  // Use custom hook for game logic (Issues #3, #4, #5, and #7)
+  const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
@@ -26,6 +28,11 @@ export default function Home() {
           <p className="text-gray-600 text-sm sm:text-base">
             Built with Next.js & AI Agents
           </p>
+        </div>
+
+        {/* Score Board - Shows wins for X, O, and draws (Issue #7) */}
+        <div className="mb-6">
+          <ScoreBoard score={score} onResetScore={resetScore} />
         </div>
 
         {/* Game Board */}
@@ -47,7 +54,7 @@ export default function Home() {
         {/* Info Message */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            ✅ <strong>Win & Draw detection active!</strong> Score tracking coming in Issue #7
+            ✅ <strong>Score tracking active!</strong> Scores persist during your session.
           </p>
         </div>
       </div>

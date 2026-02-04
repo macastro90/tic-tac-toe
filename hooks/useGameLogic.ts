@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Board, Player } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Board, Player, Score } from '@/lib/types';
 
 /**
  * All possible winning combinations in Tic-Tac-Toe
@@ -31,6 +31,7 @@ const WINNING_COMBINATIONS = [
  * - Win detection
  * - Draw detection
  * - Game reset
+ * - Score tracking across multiple games
  *
  * @returns Game state and control functions
  */
@@ -52,6 +53,26 @@ export function useGameLogic() {
 
   // Draw state: true if game ends in a draw
   const [isDraw, setIsDraw] = useState<boolean>(false);
+
+  // Score tracking: persists across games during session
+  const [score, setScore] = useState<Score>({ x: 0, o: 0, draws: 0 });
+
+  // Load scores from localStorage on mount
+  useEffect(() => {
+    const savedScore = localStorage.getItem('tic-tac-toe-score');
+    if (savedScore) {
+      try {
+        setScore(JSON.parse(savedScore));
+      } catch (error) {
+        console.error('Failed to load score from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save scores to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('tic-tac-toe-score', JSON.stringify(score));
+  }, [score]);
 
   /**
    * Check if there's a winner on the board
@@ -125,12 +146,22 @@ export function useGameLogic() {
     if (winResult) {
       setWinner(winResult.winner);
       setWinningLine(winResult.line);
+      // Update score for the winner
+      setScore(prevScore => ({
+        ...prevScore,
+        [winResult.winner.toLowerCase()]: prevScore[winResult.winner.toLowerCase() as keyof Score] + 1,
+      }));
       return; // Game over - winner found
     }
 
     // Check for draw: all cells filled and no winner
     if (newBoard.every(cell => cell !== null)) {
       setIsDraw(true);
+      // Update draw count
+      setScore(prevScore => ({
+        ...prevScore,
+        draws: prevScore.draws + 1,
+      }));
       return; // Game over - draw
     }
 
@@ -151,6 +182,8 @@ export function useGameLogic() {
    * - Winner resets to null
    * - Winning line resets to null
    * - Draw state resets to false
+   *
+   * Note: Score is NOT reset (persists across games)
    */
   const resetGame = () => {
     setBoard(Array(9).fill(null));
@@ -161,6 +194,21 @@ export function useGameLogic() {
     setIsDraw(false);
   };
 
+  /**
+   * Reset the score to initial state
+   *
+   * Clears all scores:
+   * - Player X wins reset to 0
+   * - Player O wins reset to 0
+   * - Draws reset to 0
+   * - Also clears localStorage
+   */
+  const resetScore = () => {
+    const initialScore = { x: 0, o: 0, draws: 0 };
+    setScore(initialScore);
+    localStorage.setItem('tic-tac-toe-score', JSON.stringify(initialScore));
+  };
+
   // Return game state and control functions
   return {
     board,
@@ -169,7 +217,9 @@ export function useGameLogic() {
     winner,
     winningLine,
     isDraw,
+    score,
     makeMove,
     resetGame,
+    resetScore,
   };
 }
