@@ -8,6 +8,7 @@ import { Player } from '@/lib/types';
  */
 interface GameStatusProps {
   currentPlayer: Player;
+  winner: Player | null;
   onReset: () => void;
 }
 
@@ -16,12 +17,14 @@ interface GameStatusProps {
  *
  * Displays the current game status including:
  * - Whose turn it is (Player X or Player O)
+ * - Winner announcement when game is won
  * - Reset button to start a new game
  *
  * @param currentPlayer - The player whose turn it is ('X' or 'O')
+ * @param winner - The winning player ('X' or 'O'), or null if no winner yet
  * @param onReset - Callback function to reset the game
  */
-export function GameStatus({ currentPlayer, onReset }: GameStatusProps) {
+export function GameStatus({ currentPlayer, winner, onReset }: GameStatusProps) {
   /**
    * Get color class based on current player
    * X = blue, O = red
@@ -42,27 +45,52 @@ export function GameStatus({ currentPlayer, onReset }: GameStatusProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 mt-6">
-      {/* Turn Indicator */}
-      <div className="flex items-center gap-3">
-        <span className="text-lg sm:text-xl text-gray-700 font-medium">
-          Current Turn:
-        </span>
-        <div
-          className={`
-            px-4 py-2
-            rounded-lg
-            border-2
-            font-bold
-            text-xl sm:text-2xl
-            ${getBadgeColor(currentPlayer)}
-            ${getPlayerColor(currentPlayer)}
-            transition-all duration-200
-            shadow-sm
-          `}
-        >
-          Player {currentPlayer}
+      {/* Winner Announcement or Turn Indicator */}
+      {winner ? (
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-bounce">
+            🎉 Winner! 🎉
+          </div>
+          <div
+            className={`
+              px-6 py-3
+              rounded-lg
+              border-3
+              font-bold
+              text-2xl sm:text-3xl
+              ${getBadgeColor(winner)}
+              ${getPlayerColor(winner)}
+              transition-all duration-200
+              shadow-lg
+              ring-4
+              ${winner === 'X' ? 'ring-blue-300' : 'ring-red-300'}
+            `}
+          >
+            Player {winner} Wins!
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <span className="text-lg sm:text-xl text-gray-700 font-medium">
+            Current Turn:
+          </span>
+          <div
+            className={`
+              px-4 py-2
+              rounded-lg
+              border-2
+              font-bold
+              text-xl sm:text-2xl
+              ${getBadgeColor(currentPlayer)}
+              ${getPlayerColor(currentPlayer)}
+              transition-all duration-200
+              shadow-sm
+            `}
+          >
+            Player {currentPlayer}
+          </div>
+        </div>
+      )}
 
       {/* Reset Button */}
       <button
@@ -84,7 +112,7 @@ export function GameStatus({ currentPlayer, onReset }: GameStatusProps) {
         "
         aria-label="Reset game"
       >
-        New Game
+        {winner ? 'Play Again' : 'New Game'}
       </button>
     </div>
   );

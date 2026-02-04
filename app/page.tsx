@@ -12,8 +12,8 @@ import { useGameLogic } from '@/hooks/useGameLogic';
  * Players alternate between X and O with proper validation.
  */
 export default function Home() {
-  // Use custom hook for game logic (Issue #3)
-  const { board, currentPlayer, makeMove, resetGame } = useGameLogic();
+  // Use custom hook for game logic (Issues #3 and #4)
+  const { board, currentPlayer, winner, winningLine, makeMove, resetGame } = useGameLogic();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
@@ -32,16 +32,21 @@ export default function Home() {
         <GameBoard
           board={board}
           onCellClick={makeMove}
-          disabled={false}
+          disabled={winner !== null}
+          winningLine={winningLine}
         />
 
-        {/* Game Status - Shows current turn and reset button */}
-        <GameStatus currentPlayer={currentPlayer} onReset={resetGame} />
+        {/* Game Status - Shows current turn, winner, and reset button */}
+        <GameStatus
+          currentPlayer={currentPlayer}
+          winner={winner}
+          onReset={resetGame}
+        />
 
         {/* Info Message */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            ✅ <strong>Turn logic active!</strong> Win/draw detection coming in Issues #4-5
+            ✅ <strong>Win detection active!</strong> Draw detection coming in Issue #5
           </p>
         </div>
       </div>
