@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useGameMode } from '@/hooks/useGameMode';
+import { useGameMode } from '@/contexts/GameModeContext';
 
 /**
  * ModeToggle Component

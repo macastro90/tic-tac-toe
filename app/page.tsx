@@ -10,7 +10,7 @@ import { ModeToggle } from '@/components/ModeToggle';
 import { View3DToggle } from '@/components/View3DToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { useGameLogic3D } from '@/hooks/useGameLogic3D';
-import { useGameMode } from '@/hooks/useGameMode';
+import { useGameMode } from '@/contexts/GameModeContext';
 
 /**
  * Home Page - Main Tic-Tac-Toe Game
