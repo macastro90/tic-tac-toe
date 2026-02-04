@@ -57,21 +57,21 @@ export function useGameLogic() {
   // Score tracking: persists across games during session
   const [score, setScore] = useState<Score>({ x: 0, o: 0, draws: 0 });
 
-  // Load scores from localStorage on mount
+  // Load scores from localStorage on mount (separate key for 2D)
   useEffect(() => {
-    const savedScore = localStorage.getItem('tic-tac-toe-score');
+    const savedScore = localStorage.getItem('tic-tac-toe-score-2d');
     if (savedScore) {
       try {
         setScore(JSON.parse(savedScore));
       } catch (error) {
-        console.error('Failed to load score from localStorage:', error);
+        console.error('Failed to load 2D score from localStorage:', error);
       }
     }
   }, []);
 
   // Save scores to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('tic-tac-toe-score', JSON.stringify(score));
+    localStorage.setItem('tic-tac-toe-score-2d', JSON.stringify(score));
   }, [score]);
 
   /**
@@ -197,7 +197,7 @@ export function useGameLogic() {
   /**
    * Reset the score to initial state
    *
-   * Clears all scores:
+   * Clears all 2D scores:
    * - Player X wins reset to 0
    * - Player O wins reset to 0
    * - Draws reset to 0
@@ -206,7 +206,7 @@ export function useGameLogic() {
   const resetScore = () => {
     const initialScore = { x: 0, o: 0, draws: 0 };
     setScore(initialScore);
-    localStorage.setItem('tic-tac-toe-score', JSON.stringify(initialScore));
+    localStorage.setItem('tic-tac-toe-score-2d', JSON.stringify(initialScore));
   };
 
   // Return game state and control functions

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Board, Player, Cell } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Board, Player, Cell, Score } from '@/lib/types';
 
 /**
  * All possible winning combinations in 3D Tic-Tac-Toe (3x3x3 cube)
@@ -149,6 +149,26 @@ export function useGameLogic3D() {
   // Draw state: true if game ends in a draw
   const [isDraw, setIsDraw] = useState<boolean>(false);
 
+  // Score tracking: persists across games during session (separate from 2D scores)
+  const [score, setScore] = useState<Score>({ x: 0, o: 0, draws: 0 });
+
+  // Load scores from localStorage on mount (separate key for 3D)
+  useEffect(() => {
+    const savedScore = localStorage.getItem('tic-tac-toe-score-3d');
+    if (savedScore) {
+      try {
+        setScore(JSON.parse(savedScore));
+      } catch (error) {
+        console.error('Failed to load 3D score from localStorage:', error);
+      }
+    }
+  }, []);
+
+  // Save scores to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('tic-tac-toe-score-3d', JSON.stringify(score));
+  }, [score]);
+
   /**
    * Check if there's a winner on the 3D board
    *
@@ -218,12 +238,22 @@ export function useGameLogic3D() {
     if (winResult) {
       setWinner(winResult.winner);
       setWinningLine(winResult.line);
+      // Update score for the winner
+      setScore(prevScore => ({
+        ...prevScore,
+        [winResult.winner.toLowerCase()]: prevScore[winResult.winner.toLowerCase() as keyof Score] + 1,
+      }));
       return; // Game over - winner found
     }
 
     // Check for draw: all 27 cells filled and no winner
     if (newBoard.every(cell => cell !== null)) {
       setIsDraw(true);
+      // Update draw count
+      setScore(prevScore => ({
+        ...prevScore,
+        draws: prevScore.draws + 1,
+      }));
       return; // Game over - draw
     }
 
@@ -244,6 +274,8 @@ export function useGameLogic3D() {
    * - Winner resets to null
    * - Winning line resets to null
    * - Draw state resets to false
+   *
+   * Note: Score is NOT reset (persists across games)
    */
   const resetGame3D = () => {
     setBoard3D(Array(27).fill(null));
@@ -254,6 +286,21 @@ export function useGameLogic3D() {
     setIsDraw(false);
   };
 
+  /**
+   * Reset the 3D score to initial state
+   *
+   * Clears all 3D scores:
+   * - Player X wins reset to 0
+   * - Player O wins reset to 0
+   * - Draws reset to 0
+   * - Also clears localStorage
+   */
+  const resetScore3D = () => {
+    const initialScore = { x: 0, o: 0, draws: 0 };
+    setScore(initialScore);
+    localStorage.setItem('tic-tac-toe-score-3d', JSON.stringify(initialScore));
+  };
+
   // Return game state and control functions
   return {
     board3D,
@@ -262,8 +309,10 @@ export function useGameLogic3D() {
     winner,
     winningLine,
     isDraw,
+    score,
     makeMove3D,
     resetGame3D,
+    resetScore3D,
     checkWinner3D,
   };
 }

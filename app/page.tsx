@@ -32,8 +32,10 @@ export default function Home() {
     winner: winner3D,
     winningLine: winningLine3D,
     isDraw: isDraw3D,
+    score: score3D,
     makeMove3D,
-    resetGame3D
+    resetGame3D,
+    resetScore3D
   } = useGameLogic3D();
 
   return (
@@ -52,12 +54,13 @@ export default function Home() {
           <ModeToggle />
         </div>
 
-        {/* Score Board - Shows wins for X, O, and draws (Issue #7) - Only in 2D mode */}
-        {gameMode === '2D' && (
-          <div className="mb-4 sm:mb-6 md:mb-8">
-            <ScoreBoard score={score} onResetScore={resetScore} />
-          </div>
-        )}
+        {/* Score Board - Shows wins for X, O, and draws (Issue #7 and #13) */}
+        <div className="mb-4 sm:mb-6 md:mb-8">
+          <ScoreBoard
+            score={gameMode === '2D' ? score : score3D}
+            onResetScore={gameMode === '2D' ? resetScore : resetScore3D}
+          />
+        </div>
 
         {/* Game Board - Conditional rendering based on mode (Issue #11) */}
         {gameMode === '2D' ? (
