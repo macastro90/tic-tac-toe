@@ -156,15 +156,41 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3D
   const [hovered, setHovered] = React.useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
+  // Pulsing animation for winning cells
+  React.useEffect(() => {
+    if (!isWinning || !meshRef.current) return;
+
+    const material = meshRef.current.material as THREE.MeshStandardMaterial;
+    const startTime = Date.now();
+
+    const animate = () => {
+      if (!meshRef.current || !isWinning) return;
+
+      const elapsed = (Date.now() - startTime) / 1000; // seconds
+      // Sine wave for smooth pulsing: oscillates between 0.5 and 1.5
+      const pulse = 1 + 0.5 * Math.sin(elapsed * 3); // 3 rad/s = ~0.5 Hz
+
+      // Update emissive intensity for glow effect
+      material.emissiveIntensity = pulse * 0.8;
+
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, [isWinning]);
+
   // Material for the cell box
   const boxMaterial = useMemo(() => {
     if (isWinning) {
       return new THREE.MeshStandardMaterial({
         color: 0x10b981, // Green for winning
+        emissive: 0x10b981, // Green glow
+        emissiveIntensity: 0.8, // Will be animated
         transparent: true,
         opacity: 0.9,
-        roughness: 0.5,
-        metalness: 0.2,
+        roughness: 0.3,
+        metalness: 0.5,
       });
     }
 
