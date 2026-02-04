@@ -3,9 +3,11 @@
 import React from 'react';
 import { GameBoard } from '@/components/GameBoard';
 import { GameBoard3D } from '@/components/GameBoard3D';
+import { GameBoard3DInteractive } from '@/components/GameBoard3DInteractive';
 import { GameStatus } from '@/components/GameStatus';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { ModeToggle } from '@/components/ModeToggle';
+import { View3DToggle } from '@/components/View3DToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { useGameLogic3D } from '@/hooks/useGameLogic3D';
 import { useGameMode } from '@/hooks/useGameMode';
@@ -19,8 +21,8 @@ import { useGameMode } from '@/hooks/useGameMode';
  * Supports 2D and 3D game modes (Issue #10).
  */
 export default function Home() {
-  // Use custom hook for game mode (Issue #10)
-  const { gameMode } = useGameMode();
+  // Use custom hook for game mode (Issue #10 and #19)
+  const { gameMode, view3DMode } = useGameMode();
 
   // Use custom hook for 2D game logic (Issues #3, #4, #5, and #7)
   const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
@@ -52,6 +54,9 @@ export default function Home() {
 
           {/* Mode Toggle - Switch between 2D and 3D (Issue #10) */}
           <ModeToggle />
+
+          {/* 3D View Toggle - Switch between Simple and Interactive (Issue #19) */}
+          {gameMode === '3D' && <View3DToggle />}
         </div>
 
         {/* Score Board - Shows wins for X, O, and draws (Issue #7 and #13) */}
@@ -62,7 +67,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Game Board - Conditional rendering based on mode (Issue #11) */}
+        {/* Game Board - Conditional rendering based on mode (Issue #11 and #19) */}
         {gameMode === '2D' ? (
           <GameBoard
             board={board}
@@ -70,8 +75,15 @@ export default function Home() {
             disabled={winner !== null || isDraw}
             winningLine={winningLine}
           />
-        ) : (
+        ) : view3DMode === 'simple' ? (
           <GameBoard3D
+            board3D={board3D}
+            onCellClick={makeMove3D}
+            disabled={winner3D !== null || isDraw3D}
+            winningLine={winningLine3D}
+          />
+        ) : (
+          <GameBoard3DInteractive
             board3D={board3D}
             onCellClick={makeMove3D}
             disabled={winner3D !== null || isDraw3D}
@@ -90,7 +102,11 @@ export default function Home() {
         {/* Info Message */}
         <div className="mt-4 sm:mt-6 md:mt-8 text-center">
           <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            ✅ <strong>Currently in {gameMode} mode.</strong> {gameMode === '3D' ? 'Play across 3 layers with 49 winning combinations!' : 'Score tracking active!'}
+            ✅ <strong>Currently in {gameMode} mode{gameMode === '3D' ? ` (${view3DMode})` : ''}.</strong>{' '}
+            {gameMode === '3D'
+              ? `Play across 3 layers with 49 winning combinations! ${view3DMode === 'interactive' ? 'Drag to rotate, scroll to zoom!' : ''}`
+              : 'Score tracking active!'
+            }
           </p>
         </div>
       </div>
