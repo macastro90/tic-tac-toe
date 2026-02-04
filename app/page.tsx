@@ -4,7 +4,9 @@ import React from 'react';
 import { GameBoard } from '@/components/GameBoard';
 import { GameStatus } from '@/components/GameStatus';
 import { ScoreBoard } from '@/components/ScoreBoard';
+import { ModeToggle } from '@/components/ModeToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
+import { useGameMode } from '@/hooks/useGameMode';
 
 /**
  * Home Page - Main Tic-Tac-Toe Game
@@ -12,10 +14,14 @@ import { useGameLogic } from '@/hooks/useGameLogic';
  * Displays the game board with full turn management logic.
  * Players alternate between X and O with proper validation.
  * Includes score tracking across multiple games.
+ * Supports 2D and 3D game modes (Issue #10).
  */
 export default function Home() {
   // Use custom hook for game logic (Issues #3, #4, #5, and #7)
   const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
+
+  // Use custom hook for game mode (Issue #10)
+  const { gameMode } = useGameMode();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6">
@@ -25,9 +31,12 @@ export default function Home() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-2">
             Tic-Tac-Toe
           </h1>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base mb-4">
             Built with Next.js & AI Agents
           </p>
+
+          {/* Mode Toggle - Switch between 2D and 3D (Issue #10) */}
+          <ModeToggle />
         </div>
 
         {/* Score Board - Shows wins for X, O, and draws (Issue #7) */}
@@ -54,7 +63,7 @@ export default function Home() {
         {/* Info Message */}
         <div className="mt-4 sm:mt-6 md:mt-8 text-center">
           <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            ✅ <strong>Score tracking active!</strong> Scores persist during your session.
+            ✅ <strong>Currently in {gameMode} mode.</strong> {gameMode === '3D' ? '3D mode coming soon!' : 'Score tracking active!'}
           </p>
         </div>
       </div>
