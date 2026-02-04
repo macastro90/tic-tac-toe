@@ -9,6 +9,7 @@ import { Player } from '@/lib/types';
 interface GameStatusProps {
   currentPlayer: Player;
   winner: Player | null;
+  isDraw: boolean;
   onReset: () => void;
 }
 
@@ -18,13 +19,15 @@ interface GameStatusProps {
  * Displays the current game status including:
  * - Whose turn it is (Player X or Player O)
  * - Winner announcement when game is won
+ * - Draw announcement when game ends in a tie
  * - Reset button to start a new game
  *
  * @param currentPlayer - The player whose turn it is ('X' or 'O')
  * @param winner - The winning player ('X' or 'O'), or null if no winner yet
+ * @param isDraw - Whether the game ended in a draw
  * @param onReset - Callback function to reset the game
  */
-export function GameStatus({ currentPlayer, winner, onReset }: GameStatusProps) {
+export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatusProps) {
   /**
    * Get color class based on current player
    * X = blue, O = red
@@ -45,7 +48,7 @@ export function GameStatus({ currentPlayer, winner, onReset }: GameStatusProps) 
 
   return (
     <div className="flex flex-col items-center gap-4 mt-6">
-      {/* Winner Announcement or Turn Indicator */}
+      {/* Winner Announcement, Draw Announcement, or Turn Indicator */}
       {winner ? (
         <div className="flex flex-col items-center gap-2">
           <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-bounce">
@@ -67,6 +70,30 @@ export function GameStatus({ currentPlayer, winner, onReset }: GameStatusProps) 
             `}
           >
             Player {winner} Wins!
+          </div>
+        </div>
+      ) : isDraw ? (
+        <div className="flex flex-col items-center gap-2">
+          <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-pulse">
+            🤝 Draw! 🤝
+          </div>
+          <div
+            className="
+              px-6 py-3
+              rounded-lg
+              border-3
+              font-bold
+              text-2xl sm:text-3xl
+              bg-gray-100
+              border-gray-300
+              text-gray-700
+              transition-all duration-200
+              shadow-lg
+              ring-4
+              ring-gray-300
+            "
+          >
+            It&apos;s a Tie!
           </div>
         </div>
       ) : (
@@ -112,7 +139,7 @@ export function GameStatus({ currentPlayer, winner, onReset }: GameStatusProps) 
         "
         aria-label="Reset game"
       >
-        {winner ? 'Play Again' : 'New Game'}
+        {winner || isDraw ? 'Play Again' : 'New Game'}
       </button>
     </div>
   );

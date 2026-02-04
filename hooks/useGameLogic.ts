@@ -29,6 +29,7 @@ const WINNING_COMBINATIONS = [
  * - Turn alternation between players
  * - Move validation
  * - Win detection
+ * - Draw detection
  * - Game reset
  *
  * @returns Game state and control functions
@@ -48,6 +49,9 @@ export function useGameLogic() {
 
   // Winning line for highlighting
   const [winningLine, setWinningLine] = useState<number[] | null>(null);
+
+  // Draw state: true if game ends in a draw
+  const [isDraw, setIsDraw] = useState<boolean>(false);
 
   /**
    * Check if there's a winner on the board
@@ -83,18 +87,19 @@ export function useGameLogic() {
    * Make a move on the board
    *
    * Validates the move and updates the game state:
-   * 1. Checks if game is already over
+   * 1. Checks if game is already over (win or draw)
    * 2. Checks if cell is empty
    * 3. Places current player's symbol
    * 4. Checks for winner
-   * 5. Increments move count
-   * 6. Alternates to next player
+   * 5. Checks for draw
+   * 6. Increments move count
+   * 7. Alternates to next player
    *
    * @param index - Cell index (0-8)
    */
   const makeMove = (index: number) => {
-    // Validation: Game is already over
-    if (winner !== null) {
+    // Validation: Game is already over (win or draw)
+    if (winner !== null || isDraw) {
       return; // Game over - no more moves allowed
     }
 
@@ -123,6 +128,12 @@ export function useGameLogic() {
       return; // Game over - winner found
     }
 
+    // Check for draw: all cells filled and no winner
+    if (newBoard.every(cell => cell !== null)) {
+      setIsDraw(true);
+      return; // Game over - draw
+    }
+
     // Increment move count
     setMoveCount(moveCount + 1);
 
@@ -139,6 +150,7 @@ export function useGameLogic() {
    * - Move count resets to 0
    * - Winner resets to null
    * - Winning line resets to null
+   * - Draw state resets to false
    */
   const resetGame = () => {
     setBoard(Array(9).fill(null));
@@ -146,6 +158,7 @@ export function useGameLogic() {
     setMoveCount(0);
     setWinner(null);
     setWinningLine(null);
+    setIsDraw(false);
   };
 
   // Return game state and control functions
@@ -155,6 +168,7 @@ export function useGameLogic() {
     moveCount,
     winner,
     winningLine,
+    isDraw,
     makeMove,
     resetGame,
   };
