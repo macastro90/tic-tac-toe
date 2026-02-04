@@ -47,20 +47,20 @@ export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatu
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 mt-6">
+    <div className="flex flex-col items-center gap-4 md:gap-5 mt-6 md:mt-8">
       {/* Winner Announcement, Draw Announcement, or Turn Indicator */}
       {winner ? (
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-bounce">
+        <div className="flex flex-col items-center gap-2 md:gap-3">
+          <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 animate-bounce">
             🎉 Winner! 🎉
           </div>
           <div
             className={`
-              px-6 py-3
-              rounded-lg
+              px-6 py-3 md:px-8 md:py-4
+              rounded-lg md:rounded-xl
               border-3
               font-bold
-              text-2xl sm:text-3xl
+              text-2xl sm:text-3xl md:text-4xl
               ${getBadgeColor(winner)}
               ${getPlayerColor(winner)}
               transition-all duration-200
@@ -73,17 +73,17 @@ export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatu
           </div>
         </div>
       ) : isDraw ? (
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-2xl sm:text-3xl font-bold text-gray-800 animate-pulse">
+        <div className="flex flex-col items-center gap-2 md:gap-3">
+          <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 animate-pulse">
             🤝 Draw! 🤝
           </div>
           <div
             className="
-              px-6 py-3
-              rounded-lg
+              px-6 py-3 md:px-8 md:py-4
+              rounded-lg md:rounded-xl
               border-3
               font-bold
-              text-2xl sm:text-3xl
+              text-2xl sm:text-3xl md:text-4xl
               bg-gray-100
               border-gray-300
               text-gray-700
@@ -97,17 +97,17 @@ export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatu
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
-          <span className="text-lg sm:text-xl text-gray-700 font-medium">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+          <span className="text-lg sm:text-xl md:text-2xl text-gray-700 font-medium">
             Current Turn:
           </span>
           <div
             className={`
-              px-4 py-2
-              rounded-lg
+              px-4 py-2 md:px-5 md:py-3
+              rounded-lg md:rounded-xl
               border-2
               font-bold
-              text-xl sm:text-2xl
+              text-xl sm:text-2xl md:text-3xl
               ${getBadgeColor(currentPlayer)}
               ${getPlayerColor(currentPlayer)}
               transition-all duration-200
@@ -123,11 +123,12 @@ export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatu
       <button
         onClick={onReset}
         className="
-          px-6 py-3
+          px-6 py-3 md:px-8 md:py-4
+          text-base md:text-lg
           bg-indigo-600
           text-white
           font-semibold
-          rounded-lg
+          rounded-lg md:rounded-xl
           shadow-md
           hover:bg-indigo-700
           active:scale-95
@@ -136,6 +137,7 @@ export function GameStatus({ currentPlayer, winner, isDraw, onReset }: GameStatu
           focus:ring-2
           focus:ring-indigo-500
           focus:ring-offset-2
+          min-h-[48px]
         "
         aria-label="Reset game"
       >

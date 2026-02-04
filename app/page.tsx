@@ -18,20 +18,20 @@ export default function Home() {
   const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-2xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6">
+      <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-6 md:p-8 lg:p-10 max-w-2xl lg:max-w-3xl w-full">
         {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">
+        <div className="text-center mb-4 sm:mb-6 md:mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-2">
             Tic-Tac-Toe
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
             Built with Next.js & AI Agents
           </p>
         </div>
 
         {/* Score Board - Shows wins for X, O, and draws (Issue #7) */}
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6 md:mb-8">
           <ScoreBoard score={score} onResetScore={resetScore} />
         </div>
 
@@ -52,22 +52,22 @@ export default function Home() {
         />
 
         {/* Info Message */}
-        <div className="mt-6 text-center">
-          <p className="text-gray-600 text-sm">
+        <div className="mt-4 sm:mt-6 md:mt-8 text-center">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
             ✅ <strong>Score tracking active!</strong> Scores persist during your session.
           </p>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-gray-600 text-sm">
+      <div className="mt-4 sm:mt-6 md:mt-8 text-center text-gray-600 text-xs sm:text-sm">
         <p>
           🤖 Developed with{' '}
           <a
             href="https://github.com/macastro90/tic-tac-toe"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
           >
             AI Agents
           </a>

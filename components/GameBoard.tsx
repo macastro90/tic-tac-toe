@@ -29,16 +29,18 @@ export function GameBoard({
     const baseClasses = `
       aspect-square
       flex items-center justify-center
-      text-4xl sm:text-5xl md:text-6xl lg:text-7xl
+      text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl
       font-bold
       bg-white
-      border-2 border-gray-300
-      rounded-lg
+      border-2 md:border-3
+      border-gray-300
+      rounded-lg md:rounded-xl
       transition-all duration-200
       focus:outline-none
       focus:ring-2
       focus:ring-blue-500
       focus:ring-offset-2
+      min-h-[60px] min-w-[60px]
     `;
 
     const hoverClasses = !disabled && !value ? `
@@ -84,8 +86,8 @@ export function GameBoard({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto p-4">
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+    <div className="w-full max-w-[90vw] sm:max-w-md md:max-w-lg mx-auto px-2 sm:px-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4">
         {board.map((cell, index) => (
           <button
             key={index}
