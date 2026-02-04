@@ -47,6 +47,7 @@ interface Cell3DProps {
 function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3DProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = React.useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Material for the cell box
   const boxMaterial = useMemo(() => {
@@ -69,20 +70,77 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3D
     });
   }, [hovered, value, disabled, isWinning]);
 
-  const handleClick = () => {
-    if (!disabled && !value) {
+  /**
+   * Handle pointer down - track starting position for drag detection
+   */
+  const handlePointerDown = (e: any) => {
+    dragStartRef.current = { x: e.clientX || e.touches?.[0]?.clientX || 0, y: e.clientY || e.touches?.[0]?.clientY || 0 };
+  };
+
+  /**
+   * Handle click - only trigger if not dragging
+   * Uses raycasting internally via React Three Fiber's event system
+   */
+  const handleClick = (e: any) => {
+    if (!dragStartRef.current) return;
+
+    // Calculate distance moved since pointer down
+    const currentX = e.clientX || e.changedTouches?.[0]?.clientX || 0;
+    const currentY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
+    const deltaX = Math.abs(currentX - dragStartRef.current.x);
+    const deltaY = Math.abs(currentY - dragStartRef.current.y);
+    const dragDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Only register as click if drag distance is small (< 5 pixels)
+    // This prevents accidental clicks while rotating the camera
+    if (dragDistance < 5 && !disabled && !value) {
       onClick(index);
     }
+
+    dragStartRef.current = null;
+  };
+
+  /**
+   * Handle pointer over - show hover effect and change cursor
+   */
+  const handlePointerOver = () => {
+    if (!disabled && !value) {
+      setHovered(true);
+      document.body.style.cursor = 'pointer';
+    }
+  };
+
+  /**
+   * Handle pointer out - remove hover effect and reset cursor
+   */
+  const handlePointerOut = () => {
+    setHovered(false);
+    document.body.style.cursor = 'auto';
   };
 
   return (
     <group position={position}>
       {/* Cell Box */}
+      {/*
+        Raycasting Implementation:
+        React Three Fiber uses THREE.Raycaster internally for pointer events.
+        When user clicks/touches:
+        1. R3F converts pointer position to normalized device coordinates (-1 to 1)
+        2. Creates a ray from camera through the pointer position
+        3. Tests intersection with this mesh (via raycaster.intersectObjects)
+        4. If intersected, triggers onClick with event data
+
+        This is more efficient than manual raycasting and handles:
+        - Mouse events (click, move, down, up)
+        - Touch events (touchstart, touchend, touchmove)
+        - Pointer events (unified API)
+      */}
       <mesh
         ref={meshRef}
+        onPointerDown={handlePointerDown}
         onClick={handleClick}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={handlePointerOver}
+        onPointerOut={handlePointerOut}
         userData={{ index }}
       >
         <boxGeometry args={[1, 1, 1]} />
@@ -116,6 +174,18 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3D
 
 /**
  * 3D Scene component containing all cells
+ *
+ * Raycasting Context:
+ * React Three Fiber's Canvas component sets up the raycasting infrastructure:
+ * - Creates a THREE.Raycaster instance
+ * - Listens for pointer events on the canvas element
+ * - Maintains a list of interactive objects (meshes with event handlers)
+ * - Performs raycasting on each pointer event
+ * - Dispatches events to intersected objects in order of distance
+ *
+ * This happens automatically - no manual raycaster setup needed.
+ * Each Cell3D mesh with onClick/onPointerOver handlers is automatically
+ * included in the raycasting system.
  */
 interface Scene3DProps {
   board3D: Cell[];
@@ -167,12 +237,35 @@ function Scene3D({ board3D, onCellClick, disabled, winningLine }: Scene3DProps) 
  * GameBoard3DInteractive Component
  *
  * Renders a true 3D Tic-Tac-Toe board using Three.js with interactive controls.
+ *
  * Features:
  * - 27 cells in 3x3x3 cube formation
- * - Drag to rotate camera
- * - Scroll to zoom
- * - Click cells to place X or O
- * - Winning cells highlighted
+ * - Drag to rotate camera (OrbitControls)
+ * - Scroll to zoom in/out
+ * - Click/tap cells to place X or O
+ * - Hover effects on empty cells
+ * - Winning cells highlighted in green
+ * - Touch-friendly for mobile devices
+ *
+ * Raycasting & Click Detection:
+ * React Three Fiber handles raycasting automatically through its event system.
+ * When a user clicks/touches:
+ * 1. Pointer position is converted to normalized device coordinates (-1 to 1)
+ * 2. A ray is cast from the camera through that position
+ * 3. THREE.Raycaster.intersectObjects() tests which meshes the ray hits
+ * 4. The closest intersected mesh triggers its onClick handler
+ *
+ * Drag vs Click Detection:
+ * To prevent accidental clicks while rotating the camera:
+ * - onPointerDown tracks the starting position
+ * - onClick calculates the distance moved
+ * - Only triggers if movement < 5 pixels (true click, not drag)
+ *
+ * Touch Events:
+ * All pointer events work with touch:
+ * - Touch = click
+ * - Touch + drag = rotate camera
+ * - Pinch = zoom
  */
 export function GameBoard3DInteractive({
   board3D,
