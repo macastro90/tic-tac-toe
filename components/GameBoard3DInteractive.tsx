@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useRef, useMemo, useState } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { Cell } from '@/lib/types';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 /**
  * Props for GameBoard3DInteractive component
@@ -192,9 +193,12 @@ interface Scene3DProps {
   onCellClick: (index: number) => void;
   disabled: boolean;
   winningLine: number[] | null;
+  controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
 }
 
-function Scene3D({ board3D, onCellClick, disabled, winningLine }: Scene3DProps) {
+function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef }: Scene3DProps) {
+  const { camera } = useThree();
+
   return (
     <>
       {/* Lighting */}
@@ -206,12 +210,33 @@ function Scene3D({ board3D, onCellClick, disabled, winningLine }: Scene3DProps) 
       <PerspectiveCamera makeDefault position={[4, 4, 4]} fov={50} />
 
       {/* Orbit Controls */}
+      {/*
+        OrbitControls Configuration:
+        - enableDamping: Smooth, physics-like rotation
+        - dampingFactor: Lower = smoother but slower (0.05)
+        - minDistance/maxDistance: Zoom limits (5-15 units)
+        - maxPolarAngle: Prevent camera flip (max π/2 = 90°)
+        - enablePan: Disabled to avoid confusing navigation
+        - rotateSpeed: Faster rotation for better UX
+        - zoomSpeed: Moderate zoom speed
+        - touches: Configured for mobile gestures
+          - ONE_TOUCH: Rotate (1 finger drag)
+          - TWO_TOUCH: Zoom (pinch)
+      */}
       <OrbitControls
+        ref={controlsRef}
         enableDamping
         dampingFactor={0.05}
         minDistance={5}
         maxDistance={15}
         maxPolarAngle={Math.PI / 2}
+        enablePan={false}
+        rotateSpeed={0.8}
+        zoomSpeed={0.8}
+        touches={{
+          ONE: THREE.TOUCH.ROTATE,
+          TWO: THREE.TOUCH.DOLLY_PAN
+        }}
       />
 
       {/* Render all 27 cells */}
@@ -273,6 +298,70 @@ export function GameBoard3DInteractive({
   disabled = false,
   winningLine = null,
 }: GameBoard3DInteractiveProps) {
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
+
+  /**
+   * Reset camera to default position with smooth animation
+   * Target position: [4, 4, 4] (isometric view)
+   * Target look-at: [0, 0, 0] (center of cube)
+   * Animation duration: ~1 second (handled by damping)
+   */
+  const resetCamera = () => {
+    if (!controlsRef.current) return;
+
+    setIsResetting(true);
+
+    const controls = controlsRef.current;
+    const camera = controls.object as THREE.PerspectiveCamera;
+
+    // Animate camera position
+    const targetPosition = new THREE.Vector3(4, 4, 4);
+    const targetLookAt = new THREE.Vector3(0, 0, 0);
+
+    // Create smooth animation using requestAnimationFrame
+    const startPosition = camera.position.clone();
+    const startTarget = controls.target.clone();
+    const duration = 1000; // 1 second
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out cubic for smooth deceleration
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      // Interpolate position
+      camera.position.lerpVectors(startPosition, targetPosition, eased);
+      controls.target.lerpVectors(startTarget, targetLookAt, eased);
+      controls.update();
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setIsResetting(false);
+      }
+    };
+
+    animate();
+  };
+
+  /**
+   * Handle keyboard shortcuts
+   * R key: Reset camera view
+   */
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') {
+        resetCamera();
+      }
+    };
+
+    window.addEventListener('keypress', handleKeyPress);
+    return () => window.removeEventListener('keypress', handleKeyPress);
+  }, []);
+
   return (
     <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
       {/* 3D Board Info */}
@@ -293,14 +382,41 @@ export function GameBoard3DInteractive({
             onCellClick={onCellClick}
             disabled={disabled}
             winningLine={winningLine}
+            controlsRef={controlsRef}
           />
         </Canvas>
       </div>
 
-      {/* Controls Info */}
-      <div className="mt-4 text-center">
-        <p className="text-xs sm:text-sm text-gray-500">
-          <strong>Desktop:</strong> Drag to rotate, scroll to zoom • <strong>Mobile:</strong> Touch to rotate, pinch to zoom
+      {/* Camera Controls */}
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {/* Reset Camera Button */}
+        <button
+          onClick={resetCamera}
+          disabled={isResetting}
+          className={`
+            px-4 py-2
+            text-sm font-medium
+            bg-indigo-600 text-white
+            rounded-lg
+            shadow-sm
+            transition-all duration-200
+            focus:outline-none
+            focus:ring-2
+            focus:ring-indigo-500
+            focus:ring-offset-2
+            ${isResetting
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:bg-indigo-700 active:scale-95'
+            }
+          `}
+          aria-label="Reset camera to default view"
+        >
+          {isResetting ? '↻ Resetting...' : '↻ Reset View'}
+        </button>
+
+        {/* Controls Info */}
+        <p className="text-xs sm:text-sm text-gray-500 text-center">
+          <strong>Desktop:</strong> Drag to rotate, scroll to zoom • <strong>Mobile:</strong> Touch to rotate, pinch to zoom • <strong>Keyboard:</strong> Press R to reset
         </p>
       </div>
     </div>
