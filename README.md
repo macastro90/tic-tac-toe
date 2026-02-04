@@ -7,7 +7,7 @@ A modern Tic-Tac-Toe game built with Next.js, TypeScript, and Tailwind CSS, deve
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black?style=flat&logo=vercel)](https://vercel.com)
 
-🚀 **Live Demo:** [Coming Soon]
+🚀 **Live Demo:** [https://tic-tac-toe-nu-orcin-86.vercel.app](https://tic-tac-toe-nu-orcin-86.vercel.app)
 
 ---
 
@@ -287,6 +287,18 @@ All work is documented through:
 
 This application is deployed on **Vercel** with automatic deployments from the `main` branch.
 
+🌐 **Production URL:** [https://tic-tac-toe-nu-orcin-86.vercel.app](https://tic-tac-toe-nu-orcin-86.vercel.app)
+
+### Deployment Details
+
+- **Platform:** Vercel
+- **Framework:** Next.js 16.1.6
+- **Region:** Portland, USA (West) - pdx1
+- **SSL/HTTPS:** Enabled automatically
+- **CDN:** Vercel Edge Network
+- **Auto-Deploy:** Enabled for `main` branch
+- **Preview Deploys:** Enabled for pull requests
+
 ### Deploy Your Own
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/macastro90/tic-tac-toe)
@@ -296,6 +308,13 @@ Or manually:
 2. Import the GitHub repository
 3. Configure (Next.js auto-detected)
 4. Deploy
+
+Or via CLI:
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
 
 ---
 
@@ -352,7 +371,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 🔗 Links
 
 - **Repository:** https://github.com/macastro90/tic-tac-toe
-- **Live Demo:** [Coming Soon]
+- **Live Demo:** https://tic-tac-toe-nu-orcin-86.vercel.app
 - **Issues:** https://github.com/macastro90/tic-tac-toe/issues
 - **Pull Requests:** https://github.com/macastro90/tic-tac-toe/pulls
 
