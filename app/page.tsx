@@ -2,10 +2,12 @@
 
 import React from 'react';
 import { GameBoard } from '@/components/GameBoard';
+import { GameBoard3D } from '@/components/GameBoard3D';
 import { GameStatus } from '@/components/GameStatus';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { ModeToggle } from '@/components/ModeToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
+import { useGameLogic3D } from '@/hooks/useGameLogic3D';
 import { useGameMode } from '@/hooks/useGameMode';
 
 /**
@@ -17,11 +19,22 @@ import { useGameMode } from '@/hooks/useGameMode';
  * Supports 2D and 3D game modes (Issue #10).
  */
 export default function Home() {
-  // Use custom hook for game logic (Issues #3, #4, #5, and #7)
-  const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
-
   // Use custom hook for game mode (Issue #10)
   const { gameMode } = useGameMode();
+
+  // Use custom hook for 2D game logic (Issues #3, #4, #5, and #7)
+  const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
+
+  // Use custom hook for 3D game logic (Issue #11 and #12)
+  const {
+    board3D,
+    currentPlayer: currentPlayer3D,
+    winner: winner3D,
+    winningLine: winningLine3D,
+    isDraw: isDraw3D,
+    makeMove3D,
+    resetGame3D
+  } = useGameLogic3D();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-3 sm:p-4 md:p-6">
@@ -39,31 +52,42 @@ export default function Home() {
           <ModeToggle />
         </div>
 
-        {/* Score Board - Shows wins for X, O, and draws (Issue #7) */}
-        <div className="mb-4 sm:mb-6 md:mb-8">
-          <ScoreBoard score={score} onResetScore={resetScore} />
-        </div>
+        {/* Score Board - Shows wins for X, O, and draws (Issue #7) - Only in 2D mode */}
+        {gameMode === '2D' && (
+          <div className="mb-4 sm:mb-6 md:mb-8">
+            <ScoreBoard score={score} onResetScore={resetScore} />
+          </div>
+        )}
 
-        {/* Game Board */}
-        <GameBoard
-          board={board}
-          onCellClick={makeMove}
-          disabled={winner !== null || isDraw}
-          winningLine={winningLine}
-        />
+        {/* Game Board - Conditional rendering based on mode (Issue #11) */}
+        {gameMode === '2D' ? (
+          <GameBoard
+            board={board}
+            onCellClick={makeMove}
+            disabled={winner !== null || isDraw}
+            winningLine={winningLine}
+          />
+        ) : (
+          <GameBoard3D
+            board3D={board3D}
+            onCellClick={makeMove3D}
+            disabled={winner3D !== null || isDraw3D}
+            winningLine={winningLine3D}
+          />
+        )}
 
         {/* Game Status - Shows current turn, winner, draw, and reset button */}
         <GameStatus
-          currentPlayer={currentPlayer}
-          winner={winner}
-          isDraw={isDraw}
-          onReset={resetGame}
+          currentPlayer={gameMode === '2D' ? currentPlayer : currentPlayer3D}
+          winner={gameMode === '2D' ? winner : winner3D}
+          isDraw={gameMode === '2D' ? isDraw : isDraw3D}
+          onReset={gameMode === '2D' ? resetGame : resetGame3D}
         />
 
         {/* Info Message */}
         <div className="mt-4 sm:mt-6 md:mt-8 text-center">
           <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            ✅ <strong>Currently in {gameMode} mode.</strong> {gameMode === '3D' ? '3D mode coming soon!' : 'Score tracking active!'}
+            ✅ <strong>Currently in {gameMode} mode.</strong> {gameMode === '3D' ? 'Play across 3 layers with 49 winning combinations!' : 'Score tracking active!'}
           </p>
         </div>
       </div>
