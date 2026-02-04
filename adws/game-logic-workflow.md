@@ -3,6 +3,22 @@
 ## Purpose
 Specialized workflow for implementing game logic features in Tic-Tac-Toe, including turn management, win detection, and game state.
 
+## 📚 Architecture Decision Records (ADRs)
+
+**MANDATORY:** Agents MUST consult relevant ADRs during workflow execution.
+
+| ADR | When to Consult | Purpose |
+|-----|-----------------|---------|
+| [ADR-001](../docs/adrs/001-testing-strategy.md) | Phase 3 (TEST) | Testing strategy - game logic testing checklist |
+| [ADR-002](../docs/adrs/002-state-management-patterns.md) | Phase 1 (PLAN) | State management for game state |
+| [ADR-003](../docs/adrs/003-development-workflow.md) | Phase 3 (TEST) | Browser testing gate - verify game flow end-to-end |
+
+**Key Points for Game Logic:**
+- Game state often needs Context (shared across multiple components)
+- Browser testing MANDATORY to verify full game flow
+- Must test all 8 winning combinations (or 49 for 3D)
+- Must verify state updates trigger UI updates
+
 ---
 
 ## Phase 1: PLAN - Game Logic Design 📋

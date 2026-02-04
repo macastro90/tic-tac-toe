@@ -3,9 +3,41 @@
 ## Overview
 Complete workflow for implementing features using autonomous agents following the **plan → build → test** approach.
 
+## 📚 Architecture Decision Records (ADRs)
+
+**MANDATORY:** Agents MUST consult relevant ADRs during workflow execution.
+
+| ADR | When to Consult | Purpose |
+|-----|-----------------|---------|
+| [ADR-001](../docs/adrs/001-testing-strategy.md) | Phase 3 (TEST) | Testing strategy and quality gates |
+| [ADR-002](../docs/adrs/002-state-management-patterns.md) | Phase 1 (PLAN) | State management pattern selection |
+| [ADR-003](../docs/adrs/003-development-workflow.md) | All Phases | Development workflow and gates |
+
+**How to use:**
+```bash
+# Read ADR during relevant phase
+cat docs/adrs/001-testing-strategy.md
+cat docs/adrs/002-state-management-patterns.md
+cat docs/adrs/003-development-workflow.md
+```
+
 ---
 
 ## Phase 1: PLAN 📋
+
+### Step 0: Consult ADRs (MANDATORY)
+**Agent Actions:**
+1. **Read ADR-002 State Management Patterns:**
+   ```bash
+   cat docs/adrs/002-state-management-patterns.md
+   ```
+2. **Read ADR-003 Development Workflow:**
+   ```bash
+   cat docs/adrs/003-development-workflow.md
+   ```
+3. Understand relevant patterns and requirements
+
+**Output:** ADRs reviewed and understood
 
 ### Step 1: Requirement Analysis
 **Agent Actions:**
@@ -21,11 +53,15 @@ Complete workflow for implementing features using autonomous agents following th
 1. Review existing codebase structure
 2. Identify files to create or modify
 3. Plan component hierarchy
-4. Design state management approach
+4. **Design state management approach (consult ADR-002):**
+   - Count components that need state
+   - Determine relationship (parent-child vs different branches)
+   - Choose pattern: Local State / Props / Context
+   - Document decision and reasoning
 5. Identify required TypeScript types/interfaces
 6. Consider edge cases and error handling
 
-**Output:** Technical implementation plan
+**Output:** Technical implementation plan with state management decision documented
 
 ### Step 3: Design Decisions
 **Agent Actions:**
@@ -75,6 +111,20 @@ Complete workflow for implementing features using autonomous agents following th
 ---
 
 ## Phase 3: TEST ✅
+
+### Step 0: Read Testing Strategy (MANDATORY)
+**Agent Actions:**
+1. **Read ADR-001 Testing Strategy:**
+   ```bash
+   cat docs/adrs/001-testing-strategy.md
+   ```
+2. **Read ADR-003 Development Workflow (Gate 4):**
+   ```bash
+   cat docs/adrs/003-development-workflow.md
+   ```
+3. Understand testing requirements and browser test gate
+
+**Output:** Testing strategy understood
 
 ### Step 1: Functional Testing
 **Agent Actions:**
@@ -139,6 +189,53 @@ Test on multiple viewport sizes:
 - [ ] Works with other features
 - [ ] No regressions
 - [ ] End-to-end flow works
+
+### Step 6: Browser Testing Gate ⚠️ MANDATORY - BLOCKING
+**THIS IS A BLOCKING GATE - CANNOT PROCEED WITHOUT USER CONFIRMATION**
+
+**Agent Actions:**
+1. Ensure dev server is running: `npm run dev`
+2. **Request user confirmation** (use exact template below)
+3. **WAIT for user response** - DO NOT proceed without confirmation
+4. If issues found: Return to Phase 2 (BUILD) and fix
+5. Only proceed to Phase 4 after user confirms
+
+**User Request Template:**
+```markdown
+## 🧪 Browser Testing Required (ADR-001, ADR-003 Gate 4)
+
+I've completed the implementation. Before committing, please verify in browser:
+
+**Test URL:** http://localhost:3000
+
+### Testing Checklist (ADR-001):
+- [ ] Feature works as expected
+- [ ] No console errors (F12 → Console tab, check for red messages)
+- [ ] State changes update UI correctly (if state feature)
+- [ ] All user interactions work
+- [ ] Responsive design works (try resizing window)
+- [ ] localStorage persistence works (if applicable - refresh page)
+
+### Specific Tests for This Feature:
+[List feature-specific test steps]
+
+**Please reply:**
+- "confirmed" if all tests pass
+- Or describe any issues found
+
+⚠️ I will NOT commit until you confirm testing is complete.
+```
+
+**Agent must BLOCK here until user responds with confirmation**
+
+**Checklist:**
+- [ ] User tested in browser
+- [ ] User confirmed all functionality works
+- [ ] User confirmed no console errors
+- [ ] User confirmed state synchronization (if applicable)
+- [ ] Any reported issues have been fixed
+
+**Output:** User confirmation received, safe to proceed to commit
 
 ---
 
