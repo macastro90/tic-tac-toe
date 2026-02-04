@@ -1,117 +1,178 @@
 # Document Code Command
 
 ## Purpose
-Guide autonomous agents to create clear, comprehensive documentation for code and features.
+**TRIGGER COMMAND** - Executes Phase 4 (DOCUMENT & COMMIT) from workflows or standalone documentation tasks.
+
+---
+
+## Workflow Reference
+This command executes **Phase 4** from:
+- `adws/feature-implementation-workflow.md` (Phase 4: DOCUMENT & COMMIT)
+- Can also run standalone for documentation updates
+
+---
 
 ## Instructions for Agent
 
-When documenting code:
+### STEP 1: Identify Documentation Scope
+**Agent Actions:**
+1. Get issue number or file reference from arguments
+2. Determine what needs documentation:
+   - **New Feature** → Document implementation in issue comment
+   - **Code Changes** → Add/update JSDoc comments
+   - **README Update** → Add feature to features list
+   - **Workflow Update** → Document in `adws/`
 
-### 1. Code Comments
+### STEP 2: Execute Documentation Tasks
+
+#### Task 1: Code Comments (if needed)
+**Agent Actions:**
 Only add comments for:
-- **Complex Logic**: Algorithms that aren't immediately obvious
-- **Business Rules**: Game rules or domain-specific logic
-- **Why, Not What**: Explain reasoning, not what code does
-- **TODOs**: Future improvements or known limitations
+- ✅ **Complex algorithms** not immediately obvious
+- ✅ **Business rules** (game rules, domain logic)
+- ✅ **Why, not what** (explain reasoning)
+- ❌ **NOT** obvious code that's self-explanatory
 
-**Avoid**:
-- Obvious comments that just restate the code
-- Commenting every line
-- Outdated comments
+**Example:**
+```typescript
+/**
+ * Check if there's a winner on the board
+ *
+ * Checks all 8 possible winning combinations:
+ * - 3 rows, 3 columns, 2 diagonals
+ *
+ * @param boardToCheck - The board to check for a winner
+ * @returns Object with winner and winning line, or null if no winner
+ */
+const checkWinner = (boardToCheck: Board) => {
+  // Implementation
+};
+```
 
-### 2. Component Documentation
-For each component, consider:
+#### Task 2: Component Documentation
+**Agent Actions:**
+Add JSDoc to components:
+
 ```typescript
 /**
  * GameBoard Component
  *
  * Renders the 3x3 Tic-Tac-Toe game board with clickable cells.
- * Handles cell clicks and displays X/O symbols.
+ * Handles cell clicks and displays X/O symbols with visual feedback.
  *
- * @param board - Current state of the game board
+ * @param board - Current state of the game board (array of 9 cells)
  * @param onCellClick - Callback when a cell is clicked
+ * @param disabled - Whether the board is disabled (game over)
+ * @param winningLine - Array of indices representing winning cells (optional)
  */
 ```
 
-### 3. Function Documentation
-For complex functions:
-```typescript
-/**
- * Checks if there's a winner on the board
- *
- * @param board - The current game board state
- * @returns 'X', 'O', or null if no winner
- */
-function checkWinner(board: Cell[]): 'X' | 'O' | null {
-  // Check all winning combinations
-}
+#### Task 3: README Update
+**Agent Actions:**
+If new feature added, update `README.md`:
+
+1. **READ** current README
+2. **ADD** feature to Features section
+3. **UPDATE** Tech Stack if new dependencies
+4. **ADD** Usage instructions if needed
+
+#### Task 4: Workflow Documentation
+**Agent Actions:**
+Document in `adws/` if significant feature:
+
+```markdown
+## Issue #[N]: [Feature Name]
+
+### Approach Taken
+[What strategy was used]
+
+### Key Decisions
+- Decision 1: [Reasoning]
+- Decision 2: [Reasoning]
+
+### Challenges
+- Challenge 1: [How it was solved]
+
+### Lessons Learned
+- Lesson 1
 ```
 
-### 4. README Updates
-When implementing features, update README.md with:
-- **Features Section**: List new features added
-- **Tech Stack**: Add new dependencies
-- **Setup Instructions**: Update if needed
-- **Usage**: How to use new features
-- **Screenshots**: Add if UI changed significantly
+#### Task 5: GitHub Issue Documentation
+**Agent Actions:**
+Comment on issue with documentation summary:
 
-### 5. Workflow Documentation (adws/)
-After completing a feature, document in `adws/`:
-- What approach was taken
-- Key decisions made
-- Challenges encountered
-- How they were solved
-- Lessons learned
+```bash
+gh issue comment [number] --body "## Documentation Complete 📝
 
-### 6. Specification Updates (specs/)
-Update relevant spec files:
-- Mark completed features
-- Add implementation details
-- Document API contracts
-- Update technical requirements
+### Code Documentation
+- ✅ Added JSDoc comments to complex functions
+- ✅ Component interfaces documented
 
-### 7. Commit Messages as Documentation
-Write clear commit messages:
-```
-feat: implement win detection logic
+### README Updates
+- ✅ Added feature to Features section
+- ✅ Updated usage instructions
 
-- Add checkWinner function with all 8 winning combinations
-- Update game state when winner is found
-- Display winner message in UI
-- Prevent further moves after game ends
+### Workflow Documentation
+- ✅ Documented in adws/[workflow-name].md
 
-Resolves #4
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+**Status**: All documentation complete ✓"
 ```
 
-### 8. Pull Request Documentation
-When creating PRs, include:
-- **Summary**: What was implemented
-- **Changes**: Key changes made
-- **Testing**: How it was tested
-- **Screenshots**: Visual changes (if applicable)
-- **Notes**: Anything reviewers should know
+### STEP 3: Verify Documentation Quality
+**Agent Actions:**
 
-## Documentation Checklist
+Checklist:
 - [ ] Complex logic has explanatory comments
-- [ ] Components have JSDoc if needed
+- [ ] Components have JSDoc (if appropriate)
 - [ ] README.md updated with new features
 - [ ] Workflow documented in adws/ (if applicable)
-- [ ] Specifications updated
-- [ ] Commit messages are clear and descriptive
-- [ ] PR description is comprehensive
+- [ ] Commit messages are descriptive
+- [ ] No outdated comments
 
-## Best Practices
-1. **Keep it Current**: Update docs when code changes
-2. **Be Concise**: Don't over-document obvious code
-3. **Use Examples**: Show usage examples when helpful
-4. **Format Consistently**: Follow existing documentation style
-5. **Think of Users**: Write for people who'll read it later
+---
+
+## Documentation Best Practices
+
+### DO ✅
+- Explain **why**, not **what**
+- Document complex algorithms
+- Keep comments up-to-date
+- Use examples when helpful
+- Write for future developers
+
+### DON'T ❌
+- Over-document obvious code
+- Comment every line
+- Leave outdated comments
+- Restate what code does
+- Use emoji in code comments (unless project standard)
+
+---
+
+## Example Execution
+
+```
+User: /document-code #4
+↓
+Agent reads issue #4 details
+↓
+Agent identifies: Win detection feature
+↓
+Agent executes documentation:
+  ✓ Added JSDoc to checkWinner function
+  ✓ Documented WINNING_COMBINATIONS constant
+  ✓ Updated README with win detection feature
+  ✓ Documented approach in adws/
+  ✓ Commented on issue with summary
+```
+
+---
 
 ## Success Criteria
-- Documentation is clear and helpful
-- New developers can understand the code
-- Features are well-explained in README
-- Commit history tells the development story
-- No confusion about how things work
+- ✅ Appropriate code comments added
+- ✅ Components documented with JSDoc
+- ✅ README updated (if applicable)
+- ✅ Workflow documented in adws/ (if significant feature)
+- ✅ GitHub issue documented
+- ✅ Documentation is clear and helpful
+- ✅ No over-documentation of obvious code

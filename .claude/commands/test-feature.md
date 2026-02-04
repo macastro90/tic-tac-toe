@@ -1,113 +1,126 @@
 # Test Feature Command
 
 ## Purpose
-Guide autonomous agents to thoroughly test implemented features before marking them as complete.
+**TRIGGER COMMAND** - Executes Phase 3 (TEST) from feature implementation workflows.
+
+---
+
+## Workflow Reference
+This command executes the **TEST phase** from:
+- `adws/feature-implementation-workflow.md` (Phase 3)
+- `adws/game-logic-workflow.md` (Phase 3)
+- `adws/ui-component-workflow.md` (Phase 3)
+
+---
 
 ## Instructions for Agent
 
-When testing a feature:
+### STEP 1: Identify Feature Type
+**Agent Actions:**
+1. Get issue/feature reference from arguments
+2. Determine feature type:
+   - **Game Logic** → Use Phase 3 from `game-logic-workflow.md`
+   - **UI Component** → Use Phase 3 from `ui-component-workflow.md`
+   - **General Feature** → Use Phase 3 from `feature-implementation-workflow.md`
 
-### 1. Functional Testing
-- **Core Functionality**: Does the feature work as specified?
-- **Happy Path**: Test the main user flow
-- **Edge Cases**: Test boundary conditions and unusual inputs
-- **Error Handling**: Test error scenarios and validation
+### STEP 2: Load Testing Phase from Workflow
+**Agent Actions:**
+1. **READ** the appropriate workflow file from `adws/`
+2. **EXTRACT** Phase 3: TEST section
+3. **EXECUTE** all test steps from the workflow
 
-### 2. UI/UX Testing
-- **Visual Correctness**: Does it look as intended?
-- **Interactions**: Do all buttons, clicks, and inputs work?
-- **Feedback**: Is there appropriate user feedback for actions?
-- **Loading States**: Are loading states displayed when needed?
-- **Error Messages**: Are error messages clear and helpful?
+### STEP 3: Execute Test Phase
+**Agent Actions:**
+1. Follow the exact testing steps in the workflow:
+   - **Game Logic**: Run test cases from `game-logic-workflow.md` Phase 3
+   - **UI Component**: Run visual, interaction, and responsive tests from `ui-component-workflow.md` Phase 3
+   - **General Feature**: Run comprehensive tests from `feature-implementation-workflow.md` Phase 3
 
-### 3. Responsive Design Testing
-Test on multiple viewport sizes:
-- **Mobile**: 320px - 480px (iPhone SE, etc.)
-- **Tablet**: 768px - 1024px (iPad, etc.)
-- **Desktop**: 1280px+ (laptop, desktop monitors)
+2. Check all items in the workflow's testing checklist
 
-Verify:
-- [ ] No horizontal scrolling
-- [ ] Text is readable
-- [ ] Touch targets are adequate (min 44x44px)
-- [ ] Layout doesn't break
-- [ ] Images scale properly
+3. Run technical verification:
+   ```bash
+   npm run build  # Verify no TypeScript errors
+   npm run lint   # Check code quality
+   ```
 
-### 4. Cross-Browser Testing (if applicable)
-- Chrome/Edge (Chromium)
-- Firefox
-- Safari (especially for iOS)
+### STEP 4: Document Test Results
+**Agent Actions:**
+1. **COMMENT** on GitHub issue with test results:
+   ```bash
+   gh issue comment [number] --body "## Testing Complete ✅
 
-### 5. Performance Testing
-- **Load Time**: Page loads quickly
-- **Interactions**: Smooth, no lag
-- **Console**: No errors or warnings
-- **Memory**: No memory leaks (especially with useEffect cleanup)
+   **Test Phase Executed**: [workflow-name] Phase 3
 
-### 6. Accessibility Testing
-- **Keyboard Navigation**: Can navigate with Tab/Enter
-- **Screen Reader**: Semantic HTML used
-- **Color Contrast**: Text is readable
-- **Focus States**: Clear focus indicators
+   ### Test Results
+   - ✅ Functional tests: PASSED
+   - ✅ UI/UX tests: PASSED
+   - ✅ Responsive tests: PASSED
+   - ✅ Technical tests: PASSED
+   - ✅ Integration tests: PASSED
 
-### 7. Type Safety Testing
-- Run `npm run build` to check for TypeScript errors
-- Verify no `any` types are used inappropriately
-- Check that all props are properly typed
+   ### Technical Verification
+   \`\`\`
+   npm run build: ✓ Success
+   npm run lint: ✓ No errors
+   \`\`\`
 
-### 8. Integration Testing
-- Does this feature work with existing features?
-- Are there any conflicts or regressions?
-- Does game flow work end-to-end?
+   **Status**: Ready for production ✓"
+   ```
 
-## Testing Checklist Template
+### STEP 5: Report Issues (if any)
+**Agent Actions:**
+If tests fail:
+1. Document failures clearly
+2. List steps to reproduce
+3. Suggest fixes
+4. Do NOT mark as complete until all tests pass
 
-### Feature: [Feature Name]
-Issue: #[number]
+---
 
-#### Functional Tests
-- [ ] Core functionality works
-- [ ] Happy path tested
-- [ ] Edge cases handled
-- [ ] Error handling works
-- [ ] Validation is correct
+## Example Execution
 
-#### UI/UX Tests
-- [ ] Visual design matches requirements
-- [ ] All interactions work
-- [ ] User feedback is clear
-- [ ] Loading states present
-- [ ] Error messages helpful
+```
+User: /test-feature #4
+↓
+Agent identifies: Game Logic feature (win detection)
+↓
+Agent loads: adws/game-logic-workflow.md
+↓
+Agent executes Phase 3:
+  ✓ Test Case 1: Win Detection - Horizontal
+  ✓ Test Case 2: Win Detection - Vertical
+  ✓ Test Case 3: Win Detection - Diagonal
+  ✓ Test Case 4: Draw Detection
+  ✓ Test Case 5: Turn Alternation
+  ✓ Test Case 6: Invalid Move Prevention
+  ✓ Test Case 7: Post-Game Move Prevention
+  ✓ Test Case 8: Reset Functionality
+↓
+Agent runs: npm run build ✓
+Agent runs: npm run lint ✓
+↓
+Agent comments on issue with results
+```
 
-#### Responsive Tests
-- [ ] Mobile (320px-480px) ✓
-- [ ] Tablet (768px-1024px) ✓
-- [ ] Desktop (1280px+) ✓
-- [ ] No layout breaks
-- [ ] Touch-friendly
+---
 
-#### Technical Tests
-- [ ] No console errors
-- [ ] No TypeScript errors
-- [ ] Build succeeds (`npm run build`)
-- [ ] No performance issues
-- [ ] No memory leaks
+## Quick Testing Checklist
 
-#### Integration Tests
-- [ ] Works with existing features
-- [ ] No regressions
-- [ ] End-to-end flow works
+Use the checklist from the appropriate workflow:
 
-## Test Execution
-1. Start dev server: `npm run dev`
-2. Open browser to http://localhost:3000
-3. Test each scenario systematically
-4. Document any issues found
-5. Fix issues and re-test
-6. Mark feature as tested only when all checks pass
+| Feature Type | Workflow | Phase |
+|--------------|----------|-------|
+| Game Logic | `game-logic-workflow.md` | Phase 3: TEST |
+| UI Component | `ui-component-workflow.md` | Phase 3: TEST |
+| General Feature | `feature-implementation-workflow.md` | Phase 3: TEST |
+
+---
 
 ## Success Criteria
-- All checklist items passed ✓
-- No critical bugs found
-- Feature ready for production
-- Can confidently close the issue
+- ✅ Correct workflow testing phase identified
+- ✅ All test cases from workflow executed
+- ✅ Technical verification passed (build + lint)
+- ✅ Test results documented in issue
+- ✅ No critical bugs found
+- ✅ Feature ready for production
