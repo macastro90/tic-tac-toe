@@ -34,6 +34,112 @@ function calculateCellPosition(index: number): [number, number, number] {
 }
 
 /**
+ * 3D Symbol component with smooth animations
+ * Renders X or O with scale-in and fade-in animation
+ */
+interface Symbol3DProps {
+  type: 'X' | 'O';
+}
+
+function Symbol3D({ type }: Symbol3DProps) {
+  const groupRef = useRef<THREE.Group>(null);
+  const [scale, setScale] = useState(0);
+
+  // Animate symbol appearance
+  React.useEffect(() => {
+    const startTime = Date.now();
+    const duration = 400; // 400ms animation
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Ease-out back (spring-like effect)
+      // Formula: 1 + (2.70158 + 1) * Math.pow(t - 1, 3) + 2.70158 * Math.pow(t - 1, 2)
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      const eased = 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
+
+      setScale(eased);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    animate();
+  }, []);
+
+  // Update group scale
+  React.useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.scale.set(scale, scale, scale);
+    }
+  }, [scale]);
+
+  if (type === 'X') {
+    return (
+      <group ref={groupRef}>
+        {/* X Symbol - Enhanced 3D cross
+            Two crossed boxes rotated in 3D space for better depth
+        */}
+        {/* First diagonal - rotated 45° around Z axis */}
+        <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
+          <boxGeometry args={[0.15, 1.4, 0.15]} />
+          <meshStandardMaterial
+            color={0x2563eb}
+            emissive={0x1e40af}
+            emissiveIntensity={0.3}
+            metalness={0.3}
+            roughness={0.4}
+          />
+        </mesh>
+        {/* Second diagonal - rotated -45° around Z axis */}
+        <mesh position={[0, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
+          <boxGeometry args={[0.15, 1.4, 0.15]} />
+          <meshStandardMaterial
+            color={0x2563eb}
+            emissive={0x1e40af}
+            emissiveIntensity={0.3}
+            metalness={0.3}
+            roughness={0.4}
+          />
+        </mesh>
+        {/* Third diagonal - rotated 45° around X axis for 3D depth */}
+        <mesh position={[0, 0, 0]} rotation={[Math.PI / 4, 0, Math.PI / 4]}>
+          <boxGeometry args={[0.12, 1.4, 0.12]} />
+          <meshStandardMaterial
+            color={0x3b82f6}
+            emissive={0x2563eb}
+            emissiveIntensity={0.2}
+            metalness={0.3}
+            roughness={0.4}
+            opacity={0.7}
+            transparent
+          />
+        </mesh>
+      </group>
+    );
+  }
+
+  // O Symbol - Torus with enhanced materials
+  return (
+    <group ref={groupRef}>
+      <mesh position={[0, 0, 0]}>
+        <torusGeometry args={[0.45, 0.12, 20, 40]} />
+        <meshStandardMaterial
+          color={0xdc2626}
+          emissive={0xb91c1c}
+          emissiveIntensity={0.3}
+          metalness={0.3}
+          roughness={0.4}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/**
  * Individual Cell component in 3D space
  */
 interface Cell3DProps {
@@ -148,27 +254,8 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3D
         <primitive object={boxMaterial} attach="material" />
       </mesh>
 
-      {/* X Symbol (two crossed boxes) */}
-      {value === 'X' && (
-        <>
-          <mesh position={[0, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <boxGeometry args={[0.1, 1.2, 0.1]} />
-            <meshStandardMaterial color={0x2563eb} />
-          </mesh>
-          <mesh position={[0, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
-            <boxGeometry args={[0.1, 1.2, 0.1]} />
-            <meshStandardMaterial color={0x2563eb} />
-          </mesh>
-        </>
-      )}
-
-      {/* O Symbol (torus) */}
-      {value === 'O' && (
-        <mesh position={[0, 0, 0]}>
-          <torusGeometry args={[0.4, 0.1, 16, 32]} />
-          <meshStandardMaterial color={0xdc2626} />
-        </mesh>
-      )}
+      {/* X and O Symbols with animations */}
+      {value && <Symbol3D type={value} />}
     </group>
   );
 }
