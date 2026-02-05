@@ -13,6 +13,11 @@ export type GameMode = '2D' | '3D';
 export type View3DMode = 'simple' | 'interactive';
 
 /**
+ * Quality preset type for 3D rendering
+ */
+export type QualityPreset = 'low' | 'medium' | 'high';
+
+/**
  * Game mode context value
  */
 interface GameModeContextValue {
@@ -22,6 +27,8 @@ interface GameModeContextValue {
   view3DMode: View3DMode;
   toggle3DView: () => void;
   setView3DMode: (mode: View3DMode) => void;
+  qualityPreset: QualityPreset;
+  setQualityPreset: (preset: QualityPreset) => void;
 }
 
 /**
@@ -49,6 +56,9 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
   // 3D view mode state: 'simple' (side-by-side) or 'interactive' (Three.js)
   const [view3DMode, setView3DModeState] = useState<View3DMode>('simple');
 
+  // Quality preset state: 'low', 'medium', or 'high'
+  const [qualityPreset, setQualityPresetState] = useState<QualityPreset>('medium');
+
   // Load game mode from localStorage on mount
   useEffect(() => {
     const savedMode = localStorage.getItem('gameMode');
@@ -59,6 +69,11 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     const savedView3DMode = localStorage.getItem('view3DMode');
     if (savedView3DMode === 'simple' || savedView3DMode === 'interactive') {
       setView3DModeState(savedView3DMode);
+    }
+
+    const savedQuality = localStorage.getItem('qualityPreset');
+    if (savedQuality === 'low' || savedQuality === 'medium' || savedQuality === 'high') {
+      setQualityPresetState(savedQuality);
     }
   }, []);
 
@@ -71,6 +86,11 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
   useEffect(() => {
     localStorage.setItem('view3DMode', view3DMode);
   }, [view3DMode]);
+
+  // Save quality preset to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('qualityPreset', qualityPreset);
+  }, [qualityPreset]);
 
   /**
    * Toggle between 2D and 3D modes
@@ -102,6 +122,14 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     setView3DModeState(mode);
   };
 
+  /**
+   * Set quality preset directly
+   * @param preset - The quality preset to set ('low', 'medium', or 'high')
+   */
+  const setQualityPreset = (preset: QualityPreset) => {
+    setQualityPresetState(preset);
+  };
+
   const value: GameModeContextValue = {
     gameMode,
     toggleMode,
@@ -109,6 +137,8 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     view3DMode,
     toggle3DView,
     setView3DMode,
+    qualityPreset,
+    setQualityPreset,
   };
 
   return (

@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { Cell } from '@/lib/types';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import type { QualityPreset } from '@/contexts/GameModeContext';
 
 /**
  * Props for GameBoard3DInteractive component
@@ -15,6 +16,7 @@ interface GameBoard3DInteractiveProps {
   onCellClick: (index: number) => void;
   disabled?: boolean;
   winningLine?: number[] | null;
+  quality?: QualityPreset;
 }
 
 /**
@@ -39,9 +41,10 @@ function calculateCellPosition(index: number): [number, number, number] {
  */
 interface Symbol3DProps {
   type: 'X' | 'O';
+  quality: QualityPreset;
 }
 
-function Symbol3D({ type }: Symbol3DProps) {
+function Symbol3D({ type, quality }: Symbol3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const [scale, setScale] = useState(0);
 
@@ -122,11 +125,25 @@ function Symbol3D({ type }: Symbol3DProps) {
     );
   }
 
-  // O Symbol - Torus with enhanced materials
+  // O Symbol - Torus with enhanced materials (or simple ring on low quality)
+  if (quality === 'low') {
+    // Simple ring geometry for low-end devices
+    return (
+      <group ref={groupRef}>
+        <mesh position={[0, 0, 0]}>
+          <torusGeometry args={[0.45, 0.12, 8, 16]} />
+          <meshBasicMaterial color={0xdc2626} />
+        </mesh>
+      </group>
+    );
+  }
+
+  // Standard torus for medium/high quality
+  const segments = quality === 'high' ? [20, 40] : [12, 24];
   return (
     <group ref={groupRef}>
       <mesh position={[0, 0, 0]}>
-        <torusGeometry args={[0.45, 0.12, 20, 40]} />
+        <torusGeometry args={[0.45, 0.12, segments[0], segments[1]]} />
         <meshStandardMaterial
           color={0xdc2626}
           emissive={0xb91c1c}
@@ -149,9 +166,10 @@ interface Cell3DProps {
   onClick: (index: number) => void;
   disabled: boolean;
   isWinning: boolean;
+  quality: QualityPreset;
 }
 
-function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3DProps) {
+function Cell3D({ position, value, index, onClick, disabled, isWinning, quality }: Cell3DProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = React.useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -281,7 +299,7 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning }: Cell3D
       </mesh>
 
       {/* X and O Symbols with animations */}
-      {value && <Symbol3D type={value} />}
+      {value && <Symbol3D type={value} quality={quality} />}
     </group>
   );
 }
@@ -307,17 +325,23 @@ interface Scene3DProps {
   disabled: boolean;
   winningLine: number[] | null;
   controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
+  quality: QualityPreset;
 }
 
-function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef }: Scene3DProps) {
+function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef, quality }: Scene3DProps) {
   const { camera } = useThree();
 
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} />
-      <directionalLight position={[-5, -5, -5]} intensity={0.4} />
+      {/* Lighting - simplified for low quality */}
+      <ambientLight intensity={quality === 'low' ? 0.8 : 0.6} />
+      {quality !== 'low' && (
+        <>
+          <directionalLight position={[5, 5, 5]} intensity={0.8} />
+          <directionalLight position={[-5, -5, -5]} intensity={0.4} />
+        </>
+      )}
+      {quality === 'low' && <directionalLight position={[5, 5, 5]} intensity={0.5} />}
 
       {/* Camera */}
       <PerspectiveCamera makeDefault position={[4, 4, 4]} fov={50} />
@@ -362,6 +386,7 @@ function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef }: S
           onClick={onCellClick}
           disabled={disabled}
           isWinning={winningLine?.includes(index) ?? false}
+          quality={quality}
         />
       ))}
 
@@ -410,9 +435,21 @@ export function GameBoard3DInteractive({
   onCellClick,
   disabled = false,
   winningLine = null,
+  quality = 'medium',
 }: GameBoard3DInteractiveProps) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+
+  // Cleanup geometries and materials on unmount (memory management)
+  useEffect(() => {
+    return () => {
+      // Three.js cleanup will be handled by React Three Fiber's automatic disposal
+      // But we explicitly clear references
+      if (controlsRef.current) {
+        controlsRef.current = null;
+      }
+    };
+  }, []);
 
   /**
    * Reset camera to default position with smooth animation
@@ -489,13 +526,20 @@ export function GameBoard3DInteractive({
 
       {/* Three.js Canvas */}
       <div className="w-full aspect-square bg-gray-100 rounded-lg shadow-lg overflow-hidden">
-        <Canvas>
+        <Canvas
+          gl={{
+            antialias: quality !== 'low', // Disable anti-aliasing on low quality
+            powerPreference: quality === 'high' ? 'high-performance' : 'default',
+          }}
+          dpr={quality === 'low' ? 1 : quality === 'medium' ? 1.5 : 2} // Device pixel ratio
+        >
           <Scene3D
             board3D={board3D}
             onCellClick={onCellClick}
             disabled={disabled}
             winningLine={winningLine}
             controlsRef={controlsRef}
+            quality={quality}
           />
         </Canvas>
       </div>
