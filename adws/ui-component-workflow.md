@@ -3,6 +3,23 @@
 ## Purpose
 Specialized workflow for creating React UI components with Next.js, TypeScript, and Tailwind CSS.
 
+## 📚 Architecture Decision Records (ADRs)
+
+**MANDATORY:** Agents MUST consult relevant ADRs during workflow execution.
+
+| ADR | When to Consult | Purpose |
+|-----|-----------------|---------|
+| [ADR-001](../docs/adrs/001-testing-strategy.md) | Phase 3 (TEST) | Testing strategy - UI testing checklist |
+| [ADR-002](../docs/adrs/002-state-management-patterns.md) | Phase 1 (PLAN) | When component needs state or shares state |
+| [ADR-003](../docs/adrs/003-development-workflow.md) | Phase 3 (TEST) | Browser testing gate - visual verification |
+
+**Key Points for UI Components:**
+- Most UI components use local state or receive props
+- Shared UI state (like theme, mode) requires Context (ADR-002)
+- Browser testing MANDATORY to verify visual rendering
+- Must verify responsive design at multiple breakpoints
+- Must verify interactions (clicks, hovers, focus states)
+
 ---
 
 ## Phase 1: PLAN - Component Design 📋

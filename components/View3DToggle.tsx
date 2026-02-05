@@ -4,37 +4,37 @@ import React from 'react';
 import { useGameMode } from '@/contexts/GameModeContext';
 
 /**
- * ModeToggle Component
+ * View3DToggle Component
  *
- * Toggle button to switch between 2D (classic) and 3D (cube) game modes.
- * Displays current mode with visual indication and allows seamless switching.
+ * Toggle button to switch between Simple and Interactive 3D visualizations.
+ * Only visible when in 3D mode.
  *
  * Features:
- * - Clear 2D/3D mode indication
+ * - Clear Simple/Interactive indication
  * - Smooth transition animations
  * - localStorage persistence
  * - Keyboard accessible
  * - Responsive design
  */
-export function ModeToggle() {
-  const { gameMode, toggleMode } = useGameMode();
+export function View3DToggle() {
+  const { view3DMode, toggle3DView } = useGameMode();
 
   return (
-    <div className="flex items-center justify-center gap-2">
-      <span className="text-sm sm:text-base text-gray-600 font-medium">
-        Mode:
+    <div className="flex items-center justify-center gap-2 mt-3">
+      <span className="text-xs sm:text-sm text-gray-600 font-medium">
+        3D View:
       </span>
       <button
-        onClick={toggleMode}
+        onClick={toggle3DView}
         className="
           relative
           flex items-center gap-2
-          px-4 py-2 sm:px-5 sm:py-2.5
+          px-3 py-1.5 sm:px-4 sm:py-2
           bg-white
           border-2 border-gray-300
           rounded-lg
           font-semibold
-          text-sm sm:text-base
+          text-xs sm:text-sm
           transition-all duration-200
           hover:border-indigo-400
           hover:shadow-md
@@ -44,42 +44,42 @@ export function ModeToggle() {
           focus:ring-indigo-500
           focus:ring-offset-2
         "
-        aria-label={`Switch to ${gameMode === '2D' ? '3D' : '2D'} mode. Currently in ${gameMode} mode.`}
-        title={`Switch to ${gameMode === '2D' ? '3D' : '2D'} mode`}
+        aria-label={`Switch to ${view3DMode === 'simple' ? 'Interactive' : 'Simple'} 3D view. Currently in ${view3DMode} view.`}
+        title={`Switch to ${view3DMode === 'simple' ? 'Interactive' : 'Simple'} 3D view`}
       >
-        {/* 2D Mode Button */}
+        {/* Simple Mode Button */}
         <span
           className={`
-            px-3 py-1
+            px-2 py-0.5 sm:px-3 sm:py-1
             rounded
             transition-all duration-200
             ${
-              gameMode === '2D'
+              view3DMode === 'simple'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-transparent text-gray-500'
             }
           `}
         >
-          2D
+          Simple
         </span>
 
         {/* Divider */}
         <span className="text-gray-300">|</span>
 
-        {/* 3D Mode Button */}
+        {/* Interactive Mode Button */}
         <span
           className={`
-            px-3 py-1
+            px-2 py-0.5 sm:px-3 sm:py-1
             rounded
             transition-all duration-200
             ${
-              gameMode === '3D'
+              view3DMode === 'interactive'
                 ? 'bg-indigo-600 text-white shadow-sm'
                 : 'bg-transparent text-gray-500'
             }
           `}
         >
-          3D
+          Interactive
         </span>
       </button>
     </div>

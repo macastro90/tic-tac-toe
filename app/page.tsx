@@ -1,14 +1,45 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { GameBoard } from '@/components/GameBoard';
 import { GameBoard3D } from '@/components/GameBoard3D';
 import { GameStatus } from '@/components/GameStatus';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { ModeToggle } from '@/components/ModeToggle';
+import { View3DToggle } from '@/components/View3DToggle';
+import { ReducedMotionToggle } from '@/components/ReducedMotionToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { useGameLogic3D } from '@/hooks/useGameLogic3D';
-import { useGameMode } from '@/hooks/useGameMode';
+import { useGameMode } from '@/contexts/GameModeContext';
+import { useDeviceCapabilities } from '@/hooks/useDeviceCapabilities';
+import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
+import type { QualityPreset } from '@/contexts/GameModeContext';
+
+// Lazy load GameBoard3DInteractive to reduce initial bundle size
+// This loads Three.js only when user switches to Interactive 3D mode
+const GameBoard3DInteractive = dynamic(
+  () => import('@/components/GameBoard3DInteractive').then((mod) => ({ default: mod.GameBoard3DInteractive })),
+  {
+    loading: () => (
+      <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
+        <div className="w-full aspect-square bg-gray-100 rounded-lg shadow-lg flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 text-sm">Loading 3D renderer...</p>
+          </div>
+        </div>
+      </div>
+    ),
+    ssr: false, // Disable SSR for Three.js component
+  }
+);
+
+// Lazy load QualitySettings component
+const QualitySettings = dynamic(
+  () => import('@/components/QualitySettings').then((mod) => ({ default: mod.QualitySettings })),
+  { ssr: false }
+);
 
 /**
  * Home Page - Main Tic-Tac-Toe Game
@@ -19,8 +50,34 @@ import { useGameMode } from '@/hooks/useGameMode';
  * Supports 2D and 3D game modes (Issue #10).
  */
 export default function Home() {
-  // Use custom hook for game mode (Issue #10)
-  const { gameMode } = useGameMode();
+  // Use custom hook for game mode (Issue #10, #19, #21, and #22)
+  const { gameMode, view3DMode, qualityPreset, setQualityPreset, reducedMotion } = useGameMode();
+
+  // Device capabilities detection (Issue #21)
+  const deviceCapabilities = useDeviceCapabilities();
+
+  // Auto-set quality preset based on device capabilities (on first load)
+  useEffect(() => {
+    if (deviceCapabilities && !localStorage.getItem('qualityPreset')) {
+      setQualityPreset(deviceCapabilities.recommendedQuality);
+    }
+  }, [deviceCapabilities, setQualityPreset]);
+
+  // Performance monitoring (Issue #21)
+  // Only monitor when in interactive 3D mode
+  const targetFps = deviceCapabilities?.isMobile ? 30 : 60;
+  const performanceMetrics = usePerformanceMonitor(
+    gameMode === '3D' && view3DMode === 'interactive',
+    targetFps,
+    (suggestedQuality: QualityPreset) => {
+      // Auto-downgrade quality if performance is poor
+      if (suggestedQuality !== qualityPreset) {
+        console.log(`Performance issue detected. Suggesting quality: ${suggestedQuality}`);
+        // Don't auto-change quality, just log for now
+        // User can manually adjust via QualitySettings
+      }
+    }
+  );
 
   // Use custom hook for 2D game logic (Issues #3, #4, #5, and #7)
   const { board, currentPlayer, winner, winningLine, isDraw, score, makeMove, resetGame, resetScore } = useGameLogic();
@@ -52,6 +109,16 @@ export default function Home() {
 
           {/* Mode Toggle - Switch between 2D and 3D (Issue #10) */}
           <ModeToggle />
+
+          {/* 3D View Toggle - Switch between Simple and Interactive (Issue #19) */}
+          {gameMode === '3D' && <View3DToggle />}
+
+          {/* Reduced Motion Toggle - Accessibility (Issue #22) */}
+          {gameMode === '3D' && view3DMode === 'interactive' && (
+            <div className="mt-3">
+              <ReducedMotionToggle />
+            </div>
+          )}
         </div>
 
         {/* Score Board - Shows wins for X, O, and draws (Issue #7 and #13) */}
@@ -62,7 +129,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Game Board - Conditional rendering based on mode (Issue #11) */}
+        {/* Game Board - Conditional rendering based on mode (Issue #11 and #19) */}
         {gameMode === '2D' ? (
           <GameBoard
             board={board}
@@ -70,13 +137,35 @@ export default function Home() {
             disabled={winner !== null || isDraw}
             winningLine={winningLine}
           />
-        ) : (
+        ) : view3DMode === 'simple' ? (
           <GameBoard3D
             board3D={board3D}
             onCellClick={makeMove3D}
             disabled={winner3D !== null || isDraw3D}
             winningLine={winningLine3D}
           />
+        ) : (
+          <>
+            {/* Quality Settings (Issue #21) */}
+            {deviceCapabilities && (
+              <div className="mb-4">
+                <QualitySettings
+                  deviceCapabilities={deviceCapabilities}
+                  performanceMetrics={performanceMetrics}
+                />
+              </div>
+            )}
+
+            <GameBoard3DInteractive
+              board3D={board3D}
+              onCellClick={makeMove3D}
+              disabled={winner3D !== null || isDraw3D}
+              winningLine={winningLine3D}
+              quality={qualityPreset}
+              reducedMotion={reducedMotion}
+              currentPlayer={currentPlayer3D}
+            />
+          </>
         )}
 
         {/* Game Status - Shows current turn, winner, draw, and reset button */}
@@ -90,7 +179,11 @@ export default function Home() {
         {/* Info Message */}
         <div className="mt-4 sm:mt-6 md:mt-8 text-center">
           <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            ✅ <strong>Currently in {gameMode} mode.</strong> {gameMode === '3D' ? 'Play across 3 layers with 49 winning combinations!' : 'Score tracking active!'}
+            ✅ <strong>Currently in {gameMode} mode{gameMode === '3D' ? ` (${view3DMode})` : ''}.</strong>{' '}
+            {gameMode === '3D'
+              ? `Play across 3 layers with 49 winning combinations! ${view3DMode === 'interactive' ? 'Drag to rotate, scroll to zoom!' : ''}`
+              : 'Score tracking active!'
+            }
           </p>
         </div>
       </div>
