@@ -17,6 +17,8 @@ interface GameBoard3DInteractiveProps {
   disabled?: boolean;
   winningLine?: number[] | null;
   quality?: QualityPreset;
+  reducedMotion?: boolean;
+  currentPlayer?: 'X' | 'O';
 }
 
 /**
@@ -36,20 +38,37 @@ function calculateCellPosition(index: number): [number, number, number] {
 }
 
 /**
+ * Get 3D coordinates from cell index
+ */
+function getCellCoordinates(index: number): { layer: number; row: number; col: number } {
+  const layer = Math.floor(index / 9);
+  const layerIndex = index % 9;
+  const row = Math.floor(layerIndex / 3);
+  const col = layerIndex % 3;
+  return { layer, row, col };
+}
+
+/**
  * 3D Symbol component with smooth animations
  * Renders X or O with scale-in and fade-in animation
  */
 interface Symbol3DProps {
   type: 'X' | 'O';
   quality: QualityPreset;
+  reducedMotion?: boolean;
 }
 
-function Symbol3D({ type, quality }: Symbol3DProps) {
+function Symbol3D({ type, quality, reducedMotion = false }: Symbol3DProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const [scale, setScale] = useState(0);
+  const [scale, setScale] = useState(reducedMotion ? 1 : 0);
 
-  // Animate symbol appearance
+  // Animate symbol appearance (skip if reduced motion)
   React.useEffect(() => {
+    if (reducedMotion) {
+      setScale(1);
+      return;
+    }
+
     const startTime = Date.now();
     const duration = 400; // 400ms animation
 
@@ -71,7 +90,7 @@ function Symbol3D({ type, quality }: Symbol3DProps) {
     };
 
     animate();
-  }, []);
+  }, [reducedMotion]);
 
   // Update group scale
   React.useEffect(() => {
@@ -166,17 +185,19 @@ interface Cell3DProps {
   onClick: (index: number) => void;
   disabled: boolean;
   isWinning: boolean;
+  isFocused: boolean;
   quality: QualityPreset;
+  reducedMotion?: boolean;
 }
 
-function Cell3D({ position, value, index, onClick, disabled, isWinning, quality }: Cell3DProps) {
+function Cell3D({ position, value, index, onClick, disabled, isWinning, isFocused, quality, reducedMotion = false }: Cell3DProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = React.useState(false);
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Pulsing animation for winning cells
+  // Pulsing animation for winning cells (skip if reduced motion)
   React.useEffect(() => {
-    if (!isWinning || !meshRef.current) return;
+    if (!isWinning || !meshRef.current || reducedMotion) return;
 
     const material = meshRef.current.material as THREE.MeshStandardMaterial;
     const startTime = Date.now();
@@ -196,7 +217,7 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning, quality 
 
     const animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
-  }, [isWinning]);
+  }, [isWinning, reducedMotion]);
 
   // Material for the cell box
   const boxMaterial = useMemo(() => {
@@ -212,6 +233,19 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning, quality 
       });
     }
 
+    // Focused cell (keyboard navigation)
+    if (isFocused && !value) {
+      return new THREE.MeshStandardMaterial({
+        color: 0xfbbf24, // Yellow for focus
+        emissive: 0xfbbf24, // Yellow glow
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.8,
+        roughness: 0.4,
+        metalness: 0.3,
+      });
+    }
+
     return new THREE.MeshStandardMaterial({
       color: hovered && !value && !disabled ? 0x60a5fa : 0x3b82f6, // Blue
       transparent: true,
@@ -219,7 +253,7 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning, quality 
       roughness: 0.5,
       metalness: 0.2,
     });
-  }, [hovered, value, disabled, isWinning]);
+  }, [hovered, value, disabled, isWinning, isFocused]);
 
   /**
    * Handle pointer down - track starting position for drag detection
@@ -299,9 +333,18 @@ function Cell3D({ position, value, index, onClick, disabled, isWinning, quality 
       </mesh>
 
       {/* X and O Symbols with animations */}
-      {value && <Symbol3D type={value} quality={quality} />}
+      {value && <Symbol3D type={value} quality={quality} reducedMotion={reducedMotion} />}
     </group>
   );
+}
+
+/**
+ * Helper function to get ARIA label for a cell
+ */
+function getCellAriaLabel(index: number, value: Cell): string {
+  const { layer, row, col } = getCellCoordinates(index);
+  const state = value ? `Occupied by ${value}` : 'Empty';
+  return `Cell ${index}, Layer ${layer}, Row ${row}, Column ${col}. ${state}`;
 }
 
 /**
@@ -326,9 +369,11 @@ interface Scene3DProps {
   winningLine: number[] | null;
   controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
   quality: QualityPreset;
+  reducedMotion?: boolean;
+  focusedCellIndex: number | null;
 }
 
-function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef, quality }: Scene3DProps) {
+function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef, quality, reducedMotion = false, focusedCellIndex }: Scene3DProps) {
   const { camera } = useThree();
 
   return (
@@ -386,7 +431,9 @@ function Scene3D({ board3D, onCellClick, disabled, winningLine, controlsRef, qua
           onClick={onCellClick}
           disabled={disabled}
           isWinning={winningLine?.includes(index) ?? false}
+          isFocused={focusedCellIndex === index}
           quality={quality}
+          reducedMotion={reducedMotion}
         />
       ))}
 
@@ -436,9 +483,16 @@ export function GameBoard3DInteractive({
   disabled = false,
   winningLine = null,
   quality = 'medium',
+  reducedMotion = false,
+  currentPlayer = 'X',
 }: GameBoard3DInteractiveProps) {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [focusedCellIndex, setFocusedCellIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Screen reader announcements
+  const [announcement, setAnnouncement] = useState<string>('');
 
   // Cleanup geometries and materials on unmount (memory management)
   useEffect(() => {
@@ -451,11 +505,16 @@ export function GameBoard3DInteractive({
     };
   }, []);
 
+  // Announce current player for screen readers
+  useEffect(() => {
+    setAnnouncement(`Current player: ${currentPlayer}`);
+  }, [currentPlayer]);
+
   /**
    * Reset camera to default position with smooth animation
    * Target position: [4, 4, 4] (isometric view)
    * Target look-at: [0, 0, 0] (center of cube)
-   * Animation duration: ~1 second (handled by damping)
+   * Animation duration: ~1 second (handled by damping) or instant if reduced motion
    */
   const resetCamera = () => {
     if (!controlsRef.current) return;
@@ -465,11 +524,20 @@ export function GameBoard3DInteractive({
     const controls = controlsRef.current;
     const camera = controls.object as THREE.PerspectiveCamera;
 
-    // Animate camera position
+    // Target position
     const targetPosition = new THREE.Vector3(4, 4, 4);
     const targetLookAt = new THREE.Vector3(0, 0, 0);
 
-    // Create smooth animation using requestAnimationFrame
+    if (reducedMotion) {
+      // Instant reset for reduced motion
+      camera.position.copy(targetPosition);
+      controls.target.copy(targetLookAt);
+      controls.update();
+      setIsResetting(false);
+      return;
+    }
+
+    // Animate camera position
     const startPosition = camera.position.clone();
     const startTarget = controls.target.clone();
     const duration = 1000; // 1 second
@@ -498,34 +566,191 @@ export function GameBoard3DInteractive({
   };
 
   /**
-   * Handle keyboard shortcuts
-   * R key: Reset camera view
+   * Rotate camera with keyboard arrow keys
+   */
+  const rotateCamera = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!controlsRef.current) return;
+
+    const controls = controlsRef.current;
+    const rotationAmount = 0.2; // radians
+
+    // Get current azimuth and polar angles
+    const spherical = new THREE.Spherical();
+    const offset = new THREE.Vector3().subVectors(
+      controls.object.position,
+      controls.target
+    );
+    spherical.setFromVector3(offset);
+
+    // Adjust angles based on direction
+    if (direction === 'left') {
+      spherical.theta -= rotationAmount;
+    } else if (direction === 'right') {
+      spherical.theta += rotationAmount;
+    } else if (direction === 'up') {
+      spherical.phi -= rotationAmount;
+      // Clamp to prevent flipping
+      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+    } else if (direction === 'down') {
+      spherical.phi += rotationAmount;
+      // Clamp to prevent flipping
+      spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+    }
+
+    // Update camera position
+    offset.setFromSpherical(spherical);
+    controls.object.position.copy(controls.target).add(offset);
+    controls.update();
+  };
+
+  /**
+   * Zoom camera with keyboard +/- keys
+   */
+  const zoomCamera = (direction: 'in' | 'out') => {
+    if (!controlsRef.current) return;
+
+    const controls = controlsRef.current;
+    const camera = controls.object as THREE.PerspectiveCamera;
+    const zoomAmount = 0.5;
+
+    // Calculate new distance
+    const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
+    const distance = offset.length();
+    const newDistance =
+      direction === 'in'
+        ? Math.max(5, distance - zoomAmount) // Min distance 5
+        : Math.min(15, distance + zoomAmount); // Max distance 15
+
+    // Update camera position
+    offset.normalize().multiplyScalar(newDistance);
+    camera.position.copy(controls.target).add(offset);
+    controls.update();
+  };
+
+  /**
+   * Handle cell selection via keyboard
+   */
+  const selectFocusedCell = () => {
+    if (focusedCellIndex === null || disabled) return;
+
+    const cell = board3D[focusedCellIndex];
+    if (!cell) {
+      onCellClick(focusedCellIndex);
+      const { layer, row, col } = getCellCoordinates(focusedCellIndex);
+      setAnnouncement(
+        `Placed ${currentPlayer} in Cell ${focusedCellIndex}, Layer ${layer}, Row ${row}, Column ${col}`
+      );
+    }
+  };
+
+  /**
+   * Handle keyboard shortcuts and navigation
    */
   React.useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Reset camera (R key)
       if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
         resetCamera();
+        return;
+      }
+
+      // Camera rotation (Arrow keys)
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        rotateCamera('up');
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        rotateCamera('down');
+        return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        rotateCamera('left');
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        rotateCamera('right');
+        return;
+      }
+
+      // Zoom (+ and - keys)
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        zoomCamera('in');
+        return;
+      }
+      if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        zoomCamera('out');
+        return;
+      }
+
+      // Tab navigation handled by browser default behavior
+      // Enter/Space to select cell
+      if ((e.key === 'Enter' || e.key === ' ') && focusedCellIndex !== null) {
+        e.preventDefault();
+        selectFocusedCell();
+        return;
+      }
+
+      // Escape to unfocus
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setFocusedCellIndex(null);
+        setAnnouncement('Unfocused cell');
+        return;
       }
     };
 
-    window.addEventListener('keypress', handleKeyPress);
-    return () => window.removeEventListener('keypress', handleKeyPress);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedCellIndex, disabled, board3D, currentPlayer, reducedMotion]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-2 sm:px-4">
+    <div ref={containerRef} className="w-full max-w-4xl mx-auto px-2 sm:px-4">
+      {/* Screen reader announcements (visually hidden) */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {announcement}
+      </div>
+
       {/* 3D Board Info */}
       <div className="text-center mb-4">
         <h3 className="text-lg sm:text-xl font-bold text-gray-800">
           Interactive 3D Tic-Tac-Toe
         </h3>
         <p className="text-xs sm:text-sm text-gray-600">
-          Drag to rotate • Scroll to zoom • Click cells to play
+          Drag to rotate • Scroll to zoom • Click cells to play • Tab to navigate • Arrow keys to rotate
         </p>
       </div>
 
+      {/* Keyboard navigation help */}
+      <div className="mb-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+        <h4 className="text-sm font-semibold text-blue-900 mb-1">Keyboard Controls</h4>
+        <div className="grid grid-cols-2 gap-2 text-xs text-blue-800">
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">Tab</kbd> Navigate cells</div>
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">Enter</kbd> Select cell</div>
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">Arrows</kbd> Rotate camera</div>
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">+/-</kbd> Zoom</div>
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">R</kbd> Reset view</div>
+          <div><kbd className="px-1 py-0.5 bg-white rounded border border-blue-300">Esc</kbd> Unfocus</div>
+        </div>
+      </div>
+
       {/* Three.js Canvas */}
-      <div className="w-full aspect-square bg-gray-100 rounded-lg shadow-lg overflow-hidden">
+      <div
+        className="w-full aspect-square bg-gray-100 rounded-lg shadow-lg overflow-hidden"
+        role="application"
+        aria-label="3D Tic-Tac-Toe game board"
+      >
         <Canvas
           gl={{
             antialias: quality !== 'low', // Disable anti-aliasing on low quality
@@ -540,8 +765,39 @@ export function GameBoard3DInteractive({
             winningLine={winningLine}
             controlsRef={controlsRef}
             quality={quality}
+            reducedMotion={reducedMotion}
+            focusedCellIndex={focusedCellIndex}
           />
         </Canvas>
+      </div>
+
+      {/* Keyboard-accessible cell buttons (hidden visually, used for keyboard navigation) */}
+      <div className="sr-only" role="group" aria-label="Game cells for keyboard navigation">
+        {board3D.map((cell, index) => (
+          <button
+            key={index}
+            onClick={() => onCellClick(index)}
+            onFocus={() => {
+              setFocusedCellIndex(index);
+              const { layer, row, col } = getCellCoordinates(index);
+              setAnnouncement(
+                `Focused on Cell ${index}, Layer ${layer}, Row ${row}, Column ${col}. ${
+                  cell ? `Occupied by ${cell}` : 'Empty'
+                }`
+              );
+            }}
+            onBlur={() => {
+              if (focusedCellIndex === index) {
+                setFocusedCellIndex(null);
+              }
+            }}
+            disabled={disabled || cell !== null}
+            aria-label={getCellAriaLabel(index, cell)}
+            tabIndex={0}
+          >
+            {cell || 'Empty'}
+          </button>
+        ))}
       </div>
 
       {/* Camera Controls */}
@@ -573,9 +829,24 @@ export function GameBoard3DInteractive({
 
         {/* Controls Info */}
         <p className="text-xs sm:text-sm text-gray-500 text-center">
-          <strong>Desktop:</strong> Drag to rotate, scroll to zoom • <strong>Mobile:</strong> Touch to rotate, pinch to zoom • <strong>Keyboard:</strong> Press R to reset
+          <strong>Desktop:</strong> Drag to rotate, scroll to zoom • <strong>Mobile:</strong> Touch to rotate, pinch to zoom • <strong>Keyboard:</strong> Arrow keys rotate, +/- zoom, R reset
         </p>
       </div>
+
+      {/* Focused cell indicator */}
+      {focusedCellIndex !== null && (
+        <div className="mt-3 text-center bg-yellow-50 border border-yellow-300 rounded-lg p-2">
+          <p className="text-sm text-yellow-900">
+            <strong>Focused:</strong> Cell {focusedCellIndex} •{' '}
+            {(() => {
+              const { layer, row, col } = getCellCoordinates(focusedCellIndex);
+              return `Layer ${layer}, Row ${row}, Column ${col}`;
+            })()} •{' '}
+            {board3D[focusedCellIndex] ? `Occupied by ${board3D[focusedCellIndex]}` : 'Empty'} •{' '}
+            Press <kbd className="px-1 py-0.5 bg-white rounded border border-yellow-400">Enter</kbd> to select
+          </p>
+        </div>
+      )}
     </div>
   );
 }

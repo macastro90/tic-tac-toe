@@ -8,6 +8,7 @@ import { GameStatus } from '@/components/GameStatus';
 import { ScoreBoard } from '@/components/ScoreBoard';
 import { ModeToggle } from '@/components/ModeToggle';
 import { View3DToggle } from '@/components/View3DToggle';
+import { ReducedMotionToggle } from '@/components/ReducedMotionToggle';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { useGameLogic3D } from '@/hooks/useGameLogic3D';
 import { useGameMode } from '@/contexts/GameModeContext';
@@ -49,8 +50,8 @@ const QualitySettings = dynamic(
  * Supports 2D and 3D game modes (Issue #10).
  */
 export default function Home() {
-  // Use custom hook for game mode (Issue #10, #19, and #21)
-  const { gameMode, view3DMode, qualityPreset, setQualityPreset } = useGameMode();
+  // Use custom hook for game mode (Issue #10, #19, #21, and #22)
+  const { gameMode, view3DMode, qualityPreset, setQualityPreset, reducedMotion } = useGameMode();
 
   // Device capabilities detection (Issue #21)
   const deviceCapabilities = useDeviceCapabilities();
@@ -111,6 +112,13 @@ export default function Home() {
 
           {/* 3D View Toggle - Switch between Simple and Interactive (Issue #19) */}
           {gameMode === '3D' && <View3DToggle />}
+
+          {/* Reduced Motion Toggle - Accessibility (Issue #22) */}
+          {gameMode === '3D' && view3DMode === 'interactive' && (
+            <div className="mt-3">
+              <ReducedMotionToggle />
+            </div>
+          )}
         </div>
 
         {/* Score Board - Shows wins for X, O, and draws (Issue #7 and #13) */}
@@ -154,6 +162,8 @@ export default function Home() {
               disabled={winner3D !== null || isDraw3D}
               winningLine={winningLine3D}
               quality={qualityPreset}
+              reducedMotion={reducedMotion}
+              currentPlayer={currentPlayer3D}
             />
           </>
         )}

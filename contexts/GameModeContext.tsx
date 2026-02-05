@@ -29,6 +29,9 @@ interface GameModeContextValue {
   setView3DMode: (mode: View3DMode) => void;
   qualityPreset: QualityPreset;
   setQualityPreset: (preset: QualityPreset) => void;
+  reducedMotion: boolean;
+  setReducedMotion: (enabled: boolean) => void;
+  toggleReducedMotion: () => void;
 }
 
 /**
@@ -59,6 +62,9 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
   // Quality preset state: 'low', 'medium', or 'high'
   const [qualityPreset, setQualityPresetState] = useState<QualityPreset>('medium');
 
+  // Reduced motion state: respects user preference
+  const [reducedMotion, setReducedMotionState] = useState<boolean>(false);
+
   // Load game mode from localStorage on mount
   useEffect(() => {
     const savedMode = localStorage.getItem('gameMode');
@@ -74,6 +80,16 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     const savedQuality = localStorage.getItem('qualityPreset');
     if (savedQuality === 'low' || savedQuality === 'medium' || savedQuality === 'high') {
       setQualityPresetState(savedQuality);
+    }
+
+    // Check for saved reduced motion preference, or use system preference
+    const savedReducedMotion = localStorage.getItem('reducedMotion');
+    if (savedReducedMotion !== null) {
+      setReducedMotionState(savedReducedMotion === 'true');
+    } else {
+      // Detect system preference
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setReducedMotionState(prefersReducedMotion);
     }
   }, []);
 
@@ -91,6 +107,11 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
   useEffect(() => {
     localStorage.setItem('qualityPreset', qualityPreset);
   }, [qualityPreset]);
+
+  // Save reduced motion to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('reducedMotion', reducedMotion.toString());
+  }, [reducedMotion]);
 
   /**
    * Toggle between 2D and 3D modes
@@ -130,6 +151,21 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     setQualityPresetState(preset);
   };
 
+  /**
+   * Set reduced motion directly
+   * @param enabled - Whether reduced motion should be enabled
+   */
+  const setReducedMotion = (enabled: boolean) => {
+    setReducedMotionState(enabled);
+  };
+
+  /**
+   * Toggle reduced motion on/off
+   */
+  const toggleReducedMotion = () => {
+    setReducedMotionState(prev => !prev);
+  };
+
   const value: GameModeContextValue = {
     gameMode,
     toggleMode,
@@ -139,6 +175,9 @@ export function GameModeProvider({ children }: GameModeProviderProps) {
     setView3DMode,
     qualityPreset,
     setQualityPreset,
+    reducedMotion,
+    setReducedMotion,
+    toggleReducedMotion,
   };
 
   return (
